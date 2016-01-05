@@ -49,8 +49,14 @@ class DataFormat(unittest.TestCase):
             'longitude': self.dataset['longitude'][0],
             'xco2': self.dataset['xco2'][0],
             'date': self.dataset['date'][0],
-        }) for i in range(self.length))
-        print(luke)
+        }) for i in range(5))
+
+        for p in luke:
+            print(p)
+            try:
+                next(luke)
+            except StopIteration:
+                break
 
     @classmethod
     def tearDownClass(cls):

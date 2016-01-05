@@ -13,7 +13,10 @@ def main():
 
     for p in luke:
         print(p)
-        next(luke)
+        try:
+            next(luke)
+        except StopIteration:
+            break
 
 
 if __name__ == '__main__':
