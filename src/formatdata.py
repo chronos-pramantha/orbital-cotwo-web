@@ -22,33 +22,31 @@ OCOpoint = namedtuple(
 )
 
 
-def createOCOpoint(data):
+def createOCOpoint(**data):
     """Take data for each point and create a nameptuples"""
 
-    data0 = OCOpoint(
+    return OCOpoint(
         latitude=data['latitude'],
         longitude=data['longitude'],
         timestamp=datetime(*map(int, data['date'])),
         xco2=float(data['xco2'])
     )
 
-    print(data0)
 
-
-def loop_nc4_file(ds):
+def create_generator_from_dataset(ds):
     """
-    Each file contains 30000+ relevations, loop over them
+    Each file contains 30000+ relevations, loop over them and create a generator.
+
     :param nc4.Dataset ds:
     :return:
     """
-
-    data = {
-        'latitude': float(ds['latitude'][0]),
-        'longitude': float(ds['longitude'][0]),
-        'timestamp': datetime(*map(int, list(ds['date'][0]))),
-        'xco2': float(ds['xco2'][0])
-    }
-
+    return (
+        createOCOpoint(**{
+            'latitude': ds['latitude'][0],
+            'longitude': ds['longitude'][0],
+            'xco2': ds['xco2'][0],
+            'date': ds['date'][0],
+        }) for i in range(len(ds['latitude'])))
 
 
 def return_hdf_groups(ds):
