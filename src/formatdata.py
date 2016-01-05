@@ -42,10 +42,10 @@ def create_generator_from_dataset(ds):
     """
     return (
         createOCOpoint(**{
-            'latitude': ds['latitude'][0],
-            'longitude': ds['longitude'][0],
-            'xco2': ds['xco2'][0],
-            'date': ds['date'][0],
+            'latitude': ds['latitude'][i],
+            'longitude': ds['longitude'][i],
+            'xco2': ds['xco2'][i],
+            'date': ds['date'][i],
         }) for i in range(len(ds['latitude'])))
 
 

@@ -1,7 +1,7 @@
 # coding=utf-8
 __author__ = 'Lorenzo'
 
-from files.loadfiles import return_dataset,return_files_paths
+from files.loadfiles import return_dataset, return_files_paths
 from src.formatdata import create_generator_from_dataset
 
 

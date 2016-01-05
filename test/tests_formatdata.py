@@ -45,10 +45,10 @@ class DataFormat(unittest.TestCase):
 
     def test_create_objects_from_netcdf(self):
         luke = (createOCOpoint(**{
-            'latitude': self.dataset['latitude'][0],
-            'longitude': self.dataset['longitude'][0],
-            'xco2': self.dataset['xco2'][0],
-            'date': self.dataset['date'][0],
+            'latitude': self.dataset['latitude'][i],
+            'longitude': self.dataset['longitude'][i],
+            'xco2': self.dataset['xco2'][i],
+            'date': self.dataset['date'][i],
         }) for i in range(5))
 
         for p in luke:
