@@ -19,14 +19,19 @@ from files.loadfiles import return_files_paths
 
 
 class DataFormat(unittest.TestCase):
+    @classmethod
     def setUpClass(cls):
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
 
+    def test_count_attribute_lines(self):
+        print(len(self.dataset['latitude']))
+
     def test_create_objects_from_netcdf(self):
         from src.formatdata import createOCOpoint
-        createOCOpoints(self.dataset)
+        #createOCOpoint(self.dataset)
 
+    @classmethod
     def tearDownClass(cls):
         del cls.paths
         cls.dataset.close()

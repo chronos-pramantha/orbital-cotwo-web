@@ -42,18 +42,6 @@ class DataFiles(unittest.TestCase):
         pass
 
 
-class DataSet(DataFiles):
-    @classmethod
-    def setUpClass(cls):
-        cls.dataset = return_dataset()
-
-    def test_create_an_object(self):
-        pass
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.dataset.close()
-
 if __name__ == "__main__":
     unittest.main()
 
