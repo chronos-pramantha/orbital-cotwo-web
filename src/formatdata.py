@@ -45,8 +45,8 @@ def create_generator_from_dataset(ds):
     """
     return (
         createOCOpoint(**{
-            'latitude': ds['latitude'][i],
-            'longitude': ds['longitude'][i],
+            'latitude': round(ds['latitude'][i], 6),
+            'longitude': round(ds['longitude'][i], 6),
             'xco2': ds['xco2'][i],
             'date': ds['date'][i],
         }) for i in range(len(ds['latitude'])))
@@ -117,7 +117,8 @@ def return_attributes(ds):
 
 def return_variable_doc(ds, var):
     """
-
+    Return documentation for a variable
+    :param Dataset ds
     :param str var:
     :return: str
     """

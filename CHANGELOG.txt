@@ -1,0 +1,17 @@
+** Version 0.0.1 (actual)
+- round() coordinates floats to 6th digit (DONE)
+(1) use only latest data:
+--1a download nc4 files reversed (DONE)
+--1b use a UNIQUE constraint on the couple (lat, long), do not consider timestamp
+(2) use SQLite (DONE)
+(3) API: only Area of Interest endpoint
+
+** Version 0.0.5
+-2 use PostGIS 2.0
+-(4) store earth/water flag and altitude
+
+** version 1.0
+1 (DONE)
+(5) store previous data (archive):
+-- 1b use a UNIQUE constraint on (lat, long, timestamp)
+3 API: add timestamp selection (last 6 months, 6to12 months, 12to18 months,...)
