@@ -2,13 +2,6 @@
 import os
 import netCDF4 as nc4
 
-# ### patch for developing vm
-import sys
-import os
-sys.path.append(os.getcwd())
-sys.path.append(os.path.dirname(os.getcwd()))
-# ###########################
-
 __author__ = 'Lorenzo'
 
 _NC4_FILES = os.path.join(os.path.dirname(__file__), 'nc4')
