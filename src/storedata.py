@@ -1,6 +1,7 @@
 # coding=utf-8
 """
 Binding to persistence layer (SQLite for test, PostGRE for production)
+<https://www.python.org/dev/peps/pep-0249/>
 """
 import sqlite3
 
