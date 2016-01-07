@@ -1,6 +1,8 @@
 .idea/
 lib/
 files/nc4/*.nc4
+*.sqlite
+*.sqlite-journal
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
