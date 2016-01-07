@@ -3,13 +3,6 @@
 """
 Retrieve data from netCDF4 files and store it into objects
 """
-# ### patch for developing vm
-import sys
-import os
-sys.path.append(os.getcwd())
-sys.path.append(os.path.dirname(os.getcwd()))
-# ###########################
-
 from collections import namedtuple
 from datetime import datetime
 
@@ -23,7 +16,17 @@ OCOpoint = namedtuple(
 
 
 def createOCOpoint(**data):
-    """Take data for each point and create a nameptuples"""
+    """Take data for each point and create a namedtuple"""
+    # #todo: take a look to Python ctypes library
+    # from ctypes import *
+    # class Point(Structure):
+    #     _fields_ = [
+    #         ("latitude", c_float),
+    #         ("longitude", c_float),
+    #         ('xco2', c_float),
+    #         ('timestamp', c_wchar_p)  # Py type: str or None
+    #     ]
+    #
 
     return OCOpoint(
         latitude=data['latitude'],

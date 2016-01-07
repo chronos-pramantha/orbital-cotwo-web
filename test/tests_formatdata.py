@@ -6,13 +6,6 @@ import unittest
 import netCDF4 as nc4
 from datetime import datetime
 
-# ### patch for developing vm
-import sys
-import os
-sys.path.append(os.getcwd())
-sys.path.append(os.path.dirname(os.getcwd()))
-# ###########################
-
 __author__ = 'Lorenzo'
 
 from files.loadfiles import return_dataset
