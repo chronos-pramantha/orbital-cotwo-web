@@ -8,9 +8,10 @@ from src.webserver import app
 
 
 _PORT = 5000
+_HOST = 'localhost'
 
 if __name__ == '__main__':
-    httpd = simple_server.make_server('127.0.0.1', _PORT, app)
+    httpd = simple_server.make_server(_HOST, _PORT, app)
     print('Falcon serving at port: {port!s}'.format(port=_PORT))
     try:
         httpd.serve_forever()

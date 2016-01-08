@@ -5,52 +5,20 @@ import json
 __author__ = 'Lorenzo'
 
 
-def max_body(limit):
-    """Decorator to check content length"""
-
-    def hook(req, resp, resource, params):
-        length = req.content_length
-        if length is not None and length > limit:
-            msg = ('The size of the request is too large. The body must not '
-                   'exceed ' + str(limit) + ' bytes in length.')
-
-            raise falcon.HTTPRequestEntityTooLarge(
-                'Request body is too large', msg)
-
-    return hook
-
-
 class Xco2:
     """Long-living REST resource class.
 
     Use only POST method.
     """
-    def __new__(cls):
-        # allowed endpoints for this URI
-        cls.allowed = ('area', )
+    allowed = ('area', )
 
-    def on_post(self, req, resp, endpoint):
-        """Handles POST requests"""
-        if endpoint in self.allowed:
-            resp.status = falcon.HTTP_200
-            # grab 'geojson' from req.context
-            # gather the needed resources
-            # create a dictionary in GeoJSON format in 'result' for req.context
-            resp.body = req.context['result']
-        else:
-            raise falcon.HTTPNotFound('The endpoint {name!s} you required'
-                                      'does not exist.').format(
-                name='/co2/by/' + endpoint
-            )
-
-    @falcon.before(max_body(64 * 1024))
     def on_post(self, req, resp):
-        """Check if the GeoJSON is in the request"""
-        try:
-            req.context['geojson']
-        except KeyError:
-            raise falcon.HTTPBadRequest(
-                '"geometry" data missing in request')
+        """Handles POST requests"""
+        resp.status = falcon.HTTP_200
+        # grab 'geojson' from req.context
+        # gather the needed resources
+        # create a dictionary in GeoJSON format in 'result' for req.context
+        resp.body = json.dumps(req.context['geojson'])
 
 
 class Hello:
@@ -75,6 +43,7 @@ class AuthMiddleware:
     def process_request(self, req, resp):
         # check auth for POST or PUT methods
         if req.method in ('POST', 'PUT'):
+            print('auth', req.get_header('X-Auth-Token'))
             token = req.get_header('X-Auth-Token')
             project = req.get_header('X-Project-ID')
 
@@ -162,6 +131,6 @@ app = falcon.API(middleware=[
 #
 # ##### Define routes
 #
-app.add_route('/co2/by/{endpoint}', class_)
+app.add_route('/co2/by/area', class_)
 app.add_route('/', hello)
 
