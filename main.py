@@ -1,4 +1,6 @@
 # coding=utf-8
+import sys
+
 __author__ = 'Lorenzo'
 
 from files.loadfiles import return_dataset, return_files_paths
@@ -20,6 +22,8 @@ def main():
             next(luke)
         except StopIteration:
             break
+        except KeyboardInterrupt:
+            sys.exit(0)
         except Exception:
             continue
 

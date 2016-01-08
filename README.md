@@ -3,7 +3,7 @@
 ## Run the code
 * install requirements (Python 3.3+ required)
 * run python config.py
-* download files from NASA using the script in files/
+* download files from NASA using the script in files/ (you can use the Python script or `wget` with the txt file)
 * run main.py to dump data from files to db
 
 ## To-do
@@ -19,7 +19,7 @@ Full manual [here](http://postgis.net/docs/manual-dev).
 It makes possible calculations over planar (geometry) or ellipsoidal (geography) spatial data types. In latest versions of PostGRE it can be activated as EXTENSION.
 
 #### create a PostGIS database
-From psql command line:
+From psql command line ():
 ```
 CREATE DATABASE gisdb;
 \connect gisdb;
@@ -30,6 +30,8 @@ CREATE EXTENSION postgis_topology;
 -- Enable PostGIS Advanced 3D 
 -- and other geoprocessing algorithms
 CREATE EXTENSION postgis_sfcgal;
+
+-- OTHER EXTENSIONS
 -- fuzzy matching needed for Tiger
 CREATE EXTENSION fuzzystrmatch;
 -- rule based standardizer
@@ -51,11 +53,12 @@ CREATE EXTENSION pointcloud_postgis;
 
 #### create indexes
 ```
+-- index on geometry field, to boost coordinates lookup
 CREATE INDEX idx_table_geom
 ON table
 USING gist(geometry_field);
 
-
+-- use of btree searching algorithm on other fields
 CREATE INDEX idx_table_town
 ON table
 USING btree(some_field);

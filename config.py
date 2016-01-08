@@ -21,9 +21,15 @@ CREATE = (
 ).format(t_name=t_name)
 
 CREATE_INDEX = (
-    'CREATE UNIQUE INDEX IF NOT EXISTS datetime_lat_long ON '
-    '{t_name!s} (timestamp, latitude, longitude)'
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx__lat_long ON '
+    '{t_name!s} (latitude, longitude)'
 ).format(t_name=t_name)
+
+# Moved to next implementation (insert timestamp in index)
+# CREATE_INDEX = (
+#    'CREATE UNIQUE INDEX IF NOT EXISTS datetime_lat_long ON '
+#    '{t_name!s} (timestamp, latitude, longitude)'
+# ).format(t_name=t_name)
 
 
 def field_type(field):
