@@ -2,13 +2,17 @@
 - round() coordinates floats to 6th digit (DONE)
 (1) use only latest data:
 --1a download nc4 files reversed (DONE)
---1b use a UNIQUE constraint on the couple (lat, long), do not consider timestamp
+--1b use a UNIQUE constraint on the couple (lat, long), do not consider timestamp (DONE)
 (2) use SQLite (DONE)
 (3) API: only Area of Interest endpoint
+(6) Use a blocking server (Webapp2)
 
 ** Version 0.0.5
 -2 use PostGIS 2.0
 -(4) store earth/water flag and altitude
+3 API: AoI and zoom level for granularity of data (higher zoom level, more points)
+6 Implement Tornado
+
 
 ** version 1.0
 1 (DONE)
