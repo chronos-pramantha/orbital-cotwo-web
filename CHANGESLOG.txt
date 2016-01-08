@@ -5,17 +5,17 @@
 --1b use a UNIQUE constraint on the couple (lat, long), do not consider timestamp (DONE)
 (2) use SQLite (DONE)
 (3) API: only Area of Interest endpoint
-(6) Use a blocking server (Webapp2)
+(6) Use a blocking server
+
 
 ** Version 0.0.5
--2 use PostGIS 2.0
--(4) store earth/water flag and altitude
+2 use PostGIS 2.0
+(4) store earth/water flag and altitude
 3 API: AoI and zoom level for granularity of data (higher zoom level, more points)
 6 Implement Tornado
 
 
 ** version 1.0
-1 (DONE)
 (5) store previous data (archive):
 -- 1b use a UNIQUE constraint on (lat, long, timestamp)
 3 API: add timestamp selection (last 6 months, 6to12 months, 12to18 months,...)
