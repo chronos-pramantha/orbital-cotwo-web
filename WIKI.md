@@ -1,7 +1,7 @@
 # REST API
 **Version 0.0.1**:
 
-One endpoint:<br>
+One endpoint:
 `POST /co2/by/area/` accepts a [GeoJSON geometry](http://geojson.org/) defining a polygon and returns a GeoJSON feature collection of points with a `xco2` property 
 
 See CHANGESLOG
