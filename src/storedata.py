@@ -7,9 +7,9 @@ import sqlite3
 
 __author__ = 'Lorenzo'
 
-from config import _PATH
+from config.config import _PATH
 from src.formatdata import OCOpoint
-from config import t_name
+from config.config import t_name
 
 
 def format_namedtuple(func, *args):

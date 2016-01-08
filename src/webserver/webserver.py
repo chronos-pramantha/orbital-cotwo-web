@@ -4,6 +4,8 @@ import json
 
 __author__ = 'Lorenzo'
 
+from src.webserver.utils import get_coordinates_from_geojson
+
 
 class Xco2:
     """Long-living REST resource class.
@@ -19,8 +21,9 @@ class Xco2:
         # gather the needed resources
         # create a dictionary in GeoJSON format in 'result' for req.context
         aoi = req.context['geojson']
+        coords = str(tuple(get_coordinates_from_geojson(aoi)))
 
-        resp.body = aoi
+        req.context['result'] = coords
 
 
 class Hello:
@@ -106,8 +109,8 @@ class JSONTranslator:
                                         'A valid JSON document is required.')
 
         try:
-            req.context['geojson'] = json.loads(body.decode('utf-8'))
-
+            req.context['geojson'] = body.decode('utf-8')
+            json.loads(req.context['geojson'])
         except (ValueError, UnicodeDecodeError):
             raise falcon.HTTPError(falcon.HTTP_753,
                                    'Malformed JSON',
