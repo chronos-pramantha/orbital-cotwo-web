@@ -4,10 +4,9 @@ Basic HTTP client and a Thread Pooling function to manage multiple requests
 """
 import urllib.request
 import urllib.parse
-import json
 
-from secret import _KEY
-from exceptions import ConnectionFault
+from config.secret import secret
+
 
 __author__ = 'Lorenzo'
 
@@ -17,19 +16,17 @@ def _request(url, data=None):
     Build the Request object to send to JSON-RPC API.
 
     :param str url: complete endpoint
-    :param dict data: data for the POST form
+    :param dict data: data for the POST body
     :return: Request object
     """
     if data:
         req = urllib.request.Request(
             url,
-            json.dumps(data).encode("utf-8"),
-            {
-                "X-Starfighter-Authorization": _KEY,
-                "accept-encoding": "gzip",
-                "content-type": "application/json"
-            }
+            data.encode("utf-8")  # encode to bytes
         )
+        req.add_header("X-Auth-Token", secret)
+        req.add_header("Accept", 'application/json')
+        req.add_header("Content-Type", 'application/json')
     else:
         req = urllib.request.Request(url)
     return req
@@ -42,20 +39,12 @@ def _response(request):
     :param Request request: a urllib Request object
     :return tuple: (content, http_code)
     """
+    # "Content-Length": str(len(data))
+
     with urllib.request.urlopen(request) as response:
         status = response.getcode()
         # print(status, response.info(), )
-        data = json.loads(
-            response.read().decode('utf-8')
-        )
+        data = response.read().decode('utf-8')
+
     # print(data)
-    if status == 200 and data["ok"]:
-        return data, status
-    elif status == 200 and not data["ok"]:
-        raise ValueError('client._response() - Server response is not good ' +
-                         json.dumps(data))
-    else:
-        raise ConnectionFault('client._response() - Connection Error: ' +
-                              str(response.getcode()))
-
-
+    return status, data
