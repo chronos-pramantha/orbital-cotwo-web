@@ -18,7 +18,9 @@ class Xco2:
         # grab 'geojson' from req.context
         # gather the needed resources
         # create a dictionary in GeoJSON format in 'result' for req.context
-        resp.body = json.dumps(req.context['geojson'])
+        aoi = req.context['geojson']
+
+        resp.body = aoi
 
 
 class Hello:

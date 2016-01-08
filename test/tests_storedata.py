@@ -5,7 +5,7 @@ import sqlite3
 
 __author__ = 'Lorenzo'
 
-from config import _PATH, t_name
+from config.config import _PATH, t_name
 from src.formatdata import createOCOpoint
 from files.loadfiles import return_files_paths, return_dataset
 from src.storedata import format_namedtuple, namedtuple_values_to_sql, go_execute

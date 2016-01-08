@@ -20,8 +20,10 @@ test_requires = [
 ]
 
 dev_requires = [
-      'numoy',
-      'netCDF4'
+    'numoy',
+    'netCDF4',
+    'falcon',
+    'geojson'
 ]
 
 setup(name='oco2web',

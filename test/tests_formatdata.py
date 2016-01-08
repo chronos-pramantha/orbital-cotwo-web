@@ -12,6 +12,7 @@ from files.loadfiles import return_dataset
 from files.loadfiles import return_files_paths
 from src.formatdata import createOCOpoint
 
+
 class DataFormat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

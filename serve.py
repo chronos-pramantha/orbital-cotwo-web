@@ -4,7 +4,7 @@ from wsgiref import simple_server
 
 __author__ = 'Lorenzo'
 
-from src.webserver import app
+from src.webserver.webserver import app
 
 
 _PORT = 5000

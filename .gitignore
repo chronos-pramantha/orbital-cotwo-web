@@ -4,6 +4,7 @@ files/nc4/*.nc4
 *.sqlite
 *.sqlite-journal
 *.out
+config/secret.py
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
