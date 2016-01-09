@@ -23,15 +23,21 @@ class DBtest(unittest.TestCase):
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
 
-    def setUp(self):
-        # create a fake OCOpoint
-        self.luke = createOCOpoint(**{
-            'latitude': self.dataset['latitude'][0],
-            'longitude': self.dataset['longitude'][0],
-            'xco2': self.dataset['xco2'][0],
-            'date': self.dataset['date'][0],
+        # create an OCOpoint from the first record in the first file
+        cls.luke = createOCOpoint(**{
+            'latitude': cls.dataset['latitude'][0],
+            'longitude': cls.dataset['longitude'][0],
+            'xco2': cls.dataset['xco2'][0],
+            'date': cls.dataset['date'][0],
             }
         )
+        try:
+            go_execute(namedtuple_values_to_sql(cls.luke))
+        except sqlite3.IntegrityError:
+            pass
+
+    def setUp(self):
+        pass
 
     def test_should_return_db_table_fields(self):
         """Test if the right table is created"""
@@ -54,7 +60,6 @@ class DBtest(unittest.TestCase):
 
     def test_should_store_using_go_execute(self):
         """Test making an insert in the db"""
-        go_execute(namedtuple_values_to_sql(self.luke))
 
         # try to execute again same insert as above but should fail
         self.assertRaises(
@@ -64,12 +69,13 @@ class DBtest(unittest.TestCase):
         )
 
     def tearDown(self):
-        del self.luke
+        pass
 
     @classmethod
     def tearDownClass(cls):
         cls.conn.close()
         del cls.paths
+        del cls.luke
         cls.dataset.close()
 
 

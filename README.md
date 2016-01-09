@@ -8,6 +8,10 @@
 * run `serve.py` to start the server
 * try `curl 127.0.0.1:5000`
 
+## Run tests
+* `python test/tests_storedata` to populate the test db
+* `python test/tests_<others>` to test functionality
+
 ## Make a request
 *TO BE IMPLEMENTED*: The server accepts POST request at `/oco2/by/area`. It needs a GeoJSON to be passed in the request's body.
 
