@@ -9,6 +9,34 @@ See CHANGESLOG
 # Web server
 See CHANGESLOG
 
+# Some Math
+SQL query to retrieve all the points from a given distance from a point:
+```
+SELECT id, (
+    6371 * acos (
+        cos (radians(11.0))
+        * cos( radians(latitude))
+        * cos(radians(longitude) - radians(-172.0))
+        + sin( radians(11.0))
+        * sin radians(latitude)
+        )
+    ) AS distance 
+    FROM xco2_table
+    HAVING distance < 30
+```
+
+PostGIS query using a geometry column and the `GeometryFromText` function:
+```
+SELECT * FROM myTable WHERE 
+    ST_Within(
+       the_geom_column, 
+       GeometryFromText (
+           'POLYGON(
+               (75 20,80 30,90 22,85 10,75 20)
+            )', 4326
+       )
+    )
+```
 # PostGIS
 ## PostGIS How-tos
 PostGIS is a quite wide extension for PostGRE: check the [features](http://www.postgis.us/downloads/postgis21_cheatsheet.html).

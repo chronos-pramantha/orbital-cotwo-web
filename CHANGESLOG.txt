@@ -9,7 +9,7 @@
 
 
 ** Version 0.0.5
-2 use PostGIS 2.0
+2 use PostGIS 2.0 (probably this should be anticipated to avoid heavy refactor soon)
 (4) store earth/water flag and altitude
 3 API: AoI and zoom level for granularity of data (higher zoom level, more points)
 6 Implement Tornado
