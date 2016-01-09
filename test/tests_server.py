@@ -28,19 +28,20 @@ class ServerTest(unittest.TestCase):
         """Test POST /co2/by/area.
 
         A GeoJSON is passed as POST data"""
-        # area of interest is defined as a GeoJSON polygon
         url = 'http://localhost:5000/co2/by/area'
+        # area of interest is defined as a GeoJSON polygon
+        # complete this JSON with points in the database
         data = json.dumps(
             {
                 "geometry": {
                     "type": "Polygon",
                     "coordinates": [
                         [
-                            [100.0, 0.0],
-                            [101.0, 0.0],
-                            [101.0, 1.0],
-                            [100.0, 1.0],
-                            [100.0, 0.0]
+                            [62.5, 169.0],
+                            [62.5, 169.3],
+                            [62.9, 169.3],
+                            [62.9, 169.0],
+                            [62.5, 169.0]
                         ]
                     ]
                 }

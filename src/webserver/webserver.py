@@ -21,9 +21,14 @@ class Xco2:
         # gather the needed resources
         # create a dictionary in GeoJSON format in 'result' for req.context
         aoi = req.context['geojson']
-        coords = str(tuple(get_coordinates_from_geojson(aoi)))
+        from src.webserver.utils import build_a_select
+        coords = [g for g in list(get_coordinates_from_geojson(aoi))[:3]]
+        coords = (coords[0], coords[2], )
 
-        req.context['result'] = coords
+        from src.storedata import go_execute
+        results = go_execute(build_a_select(coords))
+
+        req.context['result'] = str([r for r in results])
 
 
 class Hello:
@@ -48,7 +53,6 @@ class AuthMiddleware:
     def process_request(self, req, resp):
         # check auth for POST or PUT methods
         if req.method in ('POST', 'PUT'):
-            print('auth', req.get_header('X-Auth-Token'))
             token = req.get_header('X-Auth-Token')
             project = req.get_header('X-Project-ID')
 
@@ -82,7 +86,7 @@ class RequireJSON(object):
     def process_request(self, req, resp):
         if not req.client_accepts_json:
             raise falcon.HTTPNotAcceptable(
-                'This API only supports responses encoded as JSON.',
+                'This API only supports requests encoded as JSON.',
                 href='http://docs.examples.com/api/json')
 
         if req.method in ('POST', 'PUT'):
@@ -110,6 +114,7 @@ class JSONTranslator:
 
         try:
             req.context['geojson'] = body.decode('utf-8')
+            # #todo: use geojson.is_valid
             json.loads(req.context['geojson'])
         except (ValueError, UnicodeDecodeError):
             raise falcon.HTTPError(falcon.HTTP_753,

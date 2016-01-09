@@ -4,6 +4,7 @@ This module test SQL queries on the database, to fetch data to feed the Web serv
 """
 import unittest
 import sqlite3
+import geojson
 
 __author__ = 'Lorenzo'
 
@@ -16,21 +17,34 @@ class TestQueries(unittest.TestCase):
     def setUpClass(cls):
         # create a connection
         cls.conn = sqlite3.connect(test_db)
+        cls.data = geojson.dumps(
+            {
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [62.5, 169.0],
+                            [62.5, 169.3],
+                            [62.9, 169.3],
+                            [62.9, 169.0],
+                            [62.5, 169.0]
+                        ]
+                    ]
+                }
+            })
 
-    def test_should_select_test_data(self):
-        coords = ((62.5, 169.3), (62.9, 169.0), )
-        def run_a_select(coords):
-            # just a placeholder query, works only with coordinates in the
-            # north-eastern quarter
-            return (
-                'SELECT latitude,longitude, xco2 from table_xco2 WHERE'
-                '((latitude > %s and latitude < %s) and (longitude > %s and longitude < %s))'
-            ).fomat(coords[0][0], coords[1][0], coords[1][1], coords[0][1])
-
+    def test_should_select_test_data_fake(self):
+        # ((nw_lat, nw_long), (se_lat, sw_long), )
+        from src.webserver.utils import get_coordinates_from_geojson
+        coords = [g for g in list(get_coordinates_from_geojson(self.data))[:3]]
+        print(coords)
+        coords = (coords[0], coords[2], )
+        from src.webserver.utils import build_a_select
 
         from src.storedata import go_execute
-
-        go_execute(run_a_select(coords))
+        results = go_execute(build_a_select(coords))
+        for r in results:
+            print(r)
 
 
     @classmethod
