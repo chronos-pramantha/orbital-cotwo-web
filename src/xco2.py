@@ -1,14 +1,19 @@
 # coding=utf-8
-from datetime import datetime
+"""
+Create database table and bind to persistence layer (PostGRE/PostGIS)
+<https://www.python.org/dev/peps/pep-0249/>
+"""
 
 __author__ = 'Lorenzo'
 
 #
-# Before running this script INSTALL and CREATE THE DATABASE as explained in WIKI.md
+# Before running this script INSTALL and CREATE THE DATABASES (gis and test)
+# as explained in WIKI.md
 #
 
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, Float, MetaData, DateTime
+from sqlalchemy import UniqueConstraint
 from geoalchemy2 import Geography, Geometry
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -28,6 +33,8 @@ class Xco2(Base):
     # use a geometry with pixels (for Web maps)
     pixels = Column('pixels', Geometry('POINT', srid=3857, spatial_index=True))
 
+    UniqueConstraint('timestamp', 'coordinates', name='uix_time_coords')
+
     def __repr__(self):
         return 'Point {coordinates!r}'.format(
             coordinates=repr(self.coordinates)
@@ -43,7 +50,7 @@ class Xco2(Base):
     def shape_geometry(cls, lat, long):
         """Return a EWKT string representing a point, to be passed to
         `ST_GeomFromEWKT` PostGIS function"""
-        return 'POINT({} {})'.format(
+        return 'SRID=3857;POINT({} {})'.format(
             lat,
             long
         )
@@ -84,6 +91,7 @@ def create_tables_in_databases():
         start_postgre_engine(db),
         checkfirst=True
     ) for db in DATABASES]
+
 
 if __name__ == '__main__':
     create_tables_in_databases()

@@ -8,6 +8,7 @@ from datetime import datetime
 
 __author__ = 'Lorenzo'
 
+from src.xco2 import Xco2
 
 OCOpoint = namedtuple(
     'OCOpoint',
@@ -16,7 +17,7 @@ OCOpoint = namedtuple(
 
 
 def createOCOpoint(**data):
-    """Take data for each point and create a namedtuple"""
+    """Take numpy data for each point and create a namedtuple"""
     # #todo: take a look to Python ctypes library
     # from ctypes import *
     # class Point(Structure):
@@ -36,21 +37,48 @@ def createOCOpoint(**data):
     )
 
 
-def create_generator_from_dataset(ds):
+def create_generator_from_dataset(ds, rng=None):
     """
     Each file contains 30000+ relevations, loop over them and create a generator.
 
     :param nc4.Dataset ds:
+    :param int rng:
     :return:
     """
+    rng = len(ds['latitude']) if not rng else rng
     return (
         createOCOpoint(**{
             'latitude': round(ds['latitude'][i], 6),
             'longitude': round(ds['longitude'][i], 6),
             'xco2': ds['xco2'][i],
             'date': ds['date'][i],
-        }) for i in range(len(ds['latitude'])))
+        }) for i in range(rng))
 
+
+def bulk_dump(session, objs_generator):
+    """
+    Dump in the database big amounts of objects from a generator.
+
+    :param Session session:
+    :param iter objs_generator:
+    """
+    while True:
+        try:
+            obj = next(objs_generator)
+            new = Xco2(
+                xco2=obj.xco2,
+                timestamp=obj.timestamp,
+                coordinates=Xco2.shape_geography(
+                    obj.latitude,  obj.longitude),
+                pixels=Xco2.shape_geometry(
+                    obj.latitude, obj.longitude)
+            )
+            session.add(new)
+            session.commit()
+        except StopIteration:
+            return
+        except Exception as e:
+            raise e
 
 def return_hdf_groups(ds):
     """
