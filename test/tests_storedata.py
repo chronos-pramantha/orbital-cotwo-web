@@ -1,15 +1,14 @@
 # coding=utf-8
-import os
 import unittest
-import sqlite3
+from sqlalchemy.orm import Session, sessionmaker
+
 
 __author__ = 'Lorenzo'
 
-from config.config import _PATH, t_name
-from src.formatdata import createOCOpoint
+from src.xco2 import start_postgre_engine, Xco2
 from files.loadfiles import return_files_paths, return_dataset
-from src.storedata import format_namedtuple, namedtuple_values_to_sql, go_execute
-test_db = _PATH
+from src.formatdata import create_generator_from_dataset, bulk_dump
+
 
 # #todo: implement 'luke' as a Mock()
 
@@ -17,65 +16,80 @@ test_db = _PATH
 class DBtest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # create a connection
-        cls.conn = sqlite3.connect(test_db)
-        # retrieve a data sample
+        cls.engine = start_postgre_engine('test', False)
+        cls.conn = cls.engine.connect()
+
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
 
-        # create an OCOpoint from the first record in the first file
-        cls.luke = createOCOpoint(**{
-            'latitude': cls.dataset['latitude'][0],
-            'longitude': cls.dataset['longitude'][0],
-            'xco2': cls.dataset['xco2'][0],
-            'date': cls.dataset['date'][0],
-            }
-        )
-        try:
-            go_execute(namedtuple_values_to_sql(cls.luke))
-        except sqlite3.IntegrityError:
-            pass
+        Session = sessionmaker()
+        Session.configure(bind=cls.engine)
+        cls.session = Session()
 
     def setUp(self):
-        pass
+        self.util_populate_table()
 
-    def test_should_return_db_table_fields(self):
-        """Test if the right table is created"""
-        sql = 'pragma table_info({name!s})'.format(name=t_name)
-        c = go_execute(sql)
-        names = [tup[1] for tup in c.fetchall()]
-        self.assertEqual(names, ['t_key', 'latitude', 'longitude', 'xco2', 'timestamp'])
+    def util_populate_table(self):
+        # create an OCOpoint from the first record in the first file
+        self.test_length = 20
+        self.luke = create_generator_from_dataset(self.dataset, self.test_length)
 
-    def test_should_format_namedtuple(self):
-        """Test format_namedtuple decorator on namedtuple_values_to_sql"""
-        func = format_namedtuple(namedtuple_values_to_sql, self.luke)
-        self.assertTrue((callable(func)))
-
-    def test_should_turn_nametuple_to_sql_statement(self):
-        """ Test namedtuple_values_to_sql and its decorator"""
-        sql = namedtuple_values_to_sql(self.luke)
-        test = ('INSERT INTO table_xco2 (\'timestamp\', \'xco2\', \'latitude\', \'longitude\') '
-                'VALUES (\'2014-09-06 01:41:45\', 395.0962829589844, -38.104153, -174.93721)')
-        self.assertTrue(isinstance(sql, str))
-
-    def test_should_store_using_go_execute(self):
-        """Test making an insert in the db"""
-
-        # try to execute again same insert as above but should fail
-        self.assertRaises(
-            sqlite3.IntegrityError,
-            go_execute,
-            namedtuple_values_to_sql(self.luke)
+        self.session.add_all(
+            [
+                Xco2(
+                    xco2=d.xco2,
+                    timestamp=d.timestamp,
+                    coordinates=Xco2.shape_geography(
+                        d.latitude,  d.longitude),
+                    pixels=Xco2.shape_geometry(
+                        d.latitude, d.longitude)
+                ) for d in self.luke
+            ]
         )
 
+        self.session.commit()
+
+    def util_drop_table(self):
+        """Utility to drop table's content"""
+        try:
+            self.session.query(Xco2).delete()
+            self.session.commit()
+        except:
+            self.session.rollback()
+
+    def test_should_find_the_records_in_the_db(self):
+        """Perform a Select to check the data inserted above"""
+        rows = self.session.query(Xco2).count()
+        self.assertEqual(rows, self.test_length)
+        #print(rows)
+
+    def test_compare_data_between_db_and_dataset(self):
+        ten = self.session.query(Xco2).limit(10)
+        lst = list(self.luke)[:9]
+        for i, l in enumerate(lst):
+            self.assertAlmostEqual(l.xco2, ten[i].xco2, delta=0.0000001)
+            self.assertEqual(l.timestamp, ten[i].timestamp)
+
+    def test_bulk_dump(self):
+        """Test Xco2.bulk_dump()"""
+        bulk_dump(
+            self.session,
+            create_generator_from_dataset(self.dataset, 8)
+        )
+        rows = self.session.query(Xco2).count()
+        self.assertEqual(rows, 28)
+
     def tearDown(self):
+        # if you want to keep the data in the db to make test using psql,
+        # comment the line below
+        self.util_drop_table()
         pass
 
     @classmethod
     def tearDownClass(cls):
+        del cls.session
         cls.conn.close()
         del cls.paths
-        del cls.luke
         cls.dataset.close()
 
 
