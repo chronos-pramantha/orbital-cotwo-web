@@ -1,11 +1,12 @@
 # coding=utf-8
-import sys
+from sqlalchemy.orm import Session, sessionmaker
 
 __author__ = 'Lorenzo'
 
 from files.loadfiles import return_dataset, return_files_paths
-from src.formatdata import create_generator_from_dataset
-from src.storedata import namedtuple_values_to_sql, go_execute
+from src.formatdata import create_generator_from_dataset, bulk_dump
+from src.xco2 import start_postgre_engine
+
 
 def main():
     paths = return_files_paths()
@@ -16,16 +17,12 @@ def main():
     print(luke, )
 
     # consume the generator
-    for point in luke:
-        try:
-            go_execute(namedtuple_values_to_sql(point))
-            next(luke)
-        except StopIteration:
-            break
-        except KeyboardInterrupt:
-            sys.exit(0)
-        except Exception:
-            continue
+    engine = start_postgre_engine('gis', True)
+    with engine.connect() as conn:
+        Session = sessionmaker()
+        Session.configure(bind=engine)
+        session = Session()
+        bulk_dump(session, luke)
 
 
 if __name__ == '__main__':
