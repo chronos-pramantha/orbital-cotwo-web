@@ -43,8 +43,40 @@ PostGIS is a quite wide extension for PostGRE: check the [features](http://www.p
 Full manual [here](http://postgis.net/docs/manual-dev).
 It makes possible calculations over planar (geometry) or ellipsoidal (geography) spatial data types. In latest versions of PostGRE it can be activated as EXTENSION.
 
+#### Install PostGRE SQL database on Ubuntu
+```
+sudo apt-get install postgresql postgresql-contrib
+sudo apt-get install postgresql-9.3-postgis-2.1
+```
+See also [here](https://help.ubuntu.com/community/PostgreSQL)
+
+Create a 'gis' and 'test' database and a 'gis' user with password 'gis' and privileges:
+```
+$> sudo -u postgres psql postgres
+
+$psql> \password postgres;
+(type password for 'root' user)
+
+$psql> CREATE USER gis;
+$psql> \password gis
+(type password for the 'gis' user)
+
+$psql> CREATE DATABASE gis;
+$psql> GRANT ALL PRIVILEGES ON DATABASE gis TO gis;
+
+$psql> CREATE DATABASE test;
+$psql> GRANT ALL PRIVILEGES ON DATABASE test TO gis;
+
+$psql> \connect gis
+$psql> CREATE EXTENSION postgis;
+
+$psql> \connect test
+$psql> CREATE EXTENSION postgis;
+```
+
+
 #### create a PostGIS database
-From psql command line ():
+From psql command line:
 ```
 CREATE DATABASE gisdb;
 \connect gisdb;
@@ -113,3 +145,19 @@ CREATE INDEX idx_table_geom ON table USING GIST(geom);
 ```
 CREATE TABLE testgeog(gid serial PRIMARY KEY, the_geog geography(POINT,4326) );
 ```
+
+
+#### Notes on Spatial Reference Systems
+
+"Here's the catch. Using SRID 3785 is like recording coordinates in pixels rather than latitude/longitude. In order to specify a particular point on the globe, the numbers you use are the actual flat pixel distance across and down from the center pixel of the map. So POINT(-80 34) is not longitude -80, latitude 34. It's 80 pixels to the left of the center of the map, and 34 pixels up from the center.
+
+Of course, to fully specify what POINT(-80 34) actually is on the globe, you have to specify how big the map is, so you know what scale you're working with. SRID 3785 defines the map to be 40075016.6856 pixels wide. This number is carefully chosen so that one pixel corresponds to one meter at the Equator. Since the map is that large, you can now see that POINT(-80 34) is actually very close to the center of the map, somewhere off the coast of west Africa, and nowhere near longitude -80, latitude 34, which is in the US.
+
+Alright, so now the question is how do we perform distance queries when the data is stored in SRID 3785. The short answer is, you can IF your objects and distances are small. You have to do two things. First, you have to make sure you're specifying all the locations using SRID 3785 rather than latitudes and longitudes. Second, you have to undistort the distance based on the latitude, because a Mercator projection like SRID 3785 distorts size the further away you get from the Equator."
+[Source](https://groups.google.com/d/msg/rgeo-users/mSuhjK2Jl8o/XtSEa0Sa0-YJ)
+
+A good starter [article](http://daniel-azuma.com/articles/georails/part-7).
+
+Choosing a [map projection (1)](https://source.opennews.org/en-US/learning/choosing-right-map-projection/) and [(2)](http://www.geo.hunter.cuny.edu/~jochen/gtech201/lectures/lec6concepts/map%20coordinate%20systems/how%20to%20choose%20a%20projection.htm).
+
+EPSG [3857](http://wiki.openstreetmap.org/wiki/EPSG:3857) and popular [Web maps providers](http://gis.stackexchange.com/questions/48949/epsg-3857-or-4326-for-googlemaps-openstreetmap-and-leaflet).
