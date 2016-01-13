@@ -33,7 +33,9 @@ class Xco2(Base):
     # use a geometry with pixels (for Web maps)
     pixels = Column('pixels', Geometry('POINT', srid=3857, spatial_index=True))
 
-    UniqueConstraint('timestamp', 'coordinates', name='uix_time_coords')
+    __table_args__ = (
+        UniqueConstraint('timestamp', 'coordinates', name='uix_time_coords'),
+    )
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(
