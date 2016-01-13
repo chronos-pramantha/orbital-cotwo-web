@@ -1,21 +1,23 @@
 ** Version 0.0.1 (actual)
-- round() coordinates floats to 6th digit (DONE)
+- round() coordinates floats to 6th digit [DONE]
 (1) use only latest data:
---1a download nc4 files reversed (DONE)
---1b use a UNIQUE constraint on the couple (lat, long), do not consider timestamp (DONE)
-(2) use SQLite (DONE)
-(3) API: only Area of Interest endpoint
-(6) Use a blocking server
+--1a download nc4 files reversed [DONE]
+--1b use a UNIQUE constraint on the couple (lat, long), do not consider timestamp [DONE][DEPRECATED]
+(2) use SQLite [DONE] [DEPRECATED]
+(3) API: only Area of Interest endpoint (the client passes to the server the center of its map and the zoom level)
+(6) Use a blocking server (Falcon Framework)
 
 
 ** Version 0.0.5
-2 use PostGIS 2.0 (probably this should be anticipated to avoid heavy refactor soon)
+--1b a UNIQUE constraint implemented for (timestamp, coordinates) [DONE]
+2 use PostGIS 2.0 (probably this should be anticipated to avoid heavy refactor soon) [DONE]
 (4) store earth/water flag and altitude
 3 API: AoI and zoom level for granularity of data (higher zoom level, more points)
-6 Implement Tornado
+
 
 
 ** version 1.0
 (5) store previous data (archive):
--- 1b use a UNIQUE constraint on (lat, long, timestamp)
-3 API: add timestamp selection (last 6 months, 6to12 months, 12to18 months,...)
+-- 1b use a UNIQUE constraint on (lat, long, timestamp) [DONE] [DEPRECATED]
+3 API: add timestamp selection for the client (last 6 months, 6to12 months, 12to18 months,...)
+6 Implement Tornado
