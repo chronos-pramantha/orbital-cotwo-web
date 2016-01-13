@@ -1,4 +1,4 @@
-# Copyright 2016 Pramantha, Ltd.
+# Copyright 2016 Pramantha Ltd, Project Chronos.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,10 +20,13 @@ test_requires = [
 ]
 
 dev_requires = [
-    'numoy',
+    'numpy',
     'netCDF4',
-    'falcon',
-    'geojson'
+    'falcon=0.3.0',
+    'geojson=1.3.1',
+    'sqlalchemy=1.0.11',
+    'geoalchemy2=0.2.6',
+    'psycopg2=2.6.1'
 ]
 
 setup(name='oco2web',
@@ -42,7 +45,7 @@ setup(name='oco2web',
       ],
       keywords='co2 emissions geolocate',
       author=u"Lorenzo Moriondo",
-      author_email='',
+      author_email='tunedconsulting@gmail.com',
       url='',
       license='Apache 2.0',
       packages=find_packages(exclude=['examples', 'tests']),
