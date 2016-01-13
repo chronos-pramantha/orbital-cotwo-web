@@ -42,8 +42,8 @@ def create_generator_from_dataset(ds, rng=None):
     Each file contains 30000+ relevations, loop over them and create a generator.
 
     :param nc4.Dataset ds:
-    :param int rng:
-    :return:
+    :param int rng: number of values to load, None means all the file
+    :return: generator with range(rng) elements
     """
     rng = len(ds['latitude']) if not rng else rng
     return (
@@ -53,6 +53,8 @@ def create_generator_from_dataset(ds, rng=None):
             'xco2': ds['xco2'][i],
             'date': ds['date'][i],
         }) for i in range(rng))
+
+    # #todo: better expressed with 'yield' ?
 
 
 def bulk_dump(session, objs_generator):
