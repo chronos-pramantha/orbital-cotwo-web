@@ -38,7 +38,7 @@ class TestDatabaseClass(unittest.TestCase):
         #print(geom)
         self.assertEqual(
             geom,
-            'POINT({} {})'.format(
+            'SRID=3857;POINT({} {})'.format(
                 self.luke.latitude, self.luke.longitude
             )
         )
@@ -59,8 +59,9 @@ class TestDatabaseClass(unittest.TestCase):
 
     def test_should_calculate_a_geometry_value(self):
         """Test: SELECT * FROM ST_GeomFromEWKT('POINT(latitude longitude)'); """
-        geom_EWKT = 'POINT(-38.10415267944336 -174.9372100830078)'
+        geom_EWKT = 'SRID=3857;POINT(-38.10415267944336 -174.9372100830078)'
         q = "SELECT ST_GeomFromEWKT('{}');".format(geom_EWKT)
+        #print(q)
         try:
             result = self.conn.execute(q)
         except Exception:
@@ -68,7 +69,7 @@ class TestDatabaseClass(unittest.TestCase):
                             'Check if PostGIS extensions are installed.')
         self.assertEqual(
             str([r for r in result][0][0]),
-            '0101000000000000E0540D43C0000000A0FDDD65C0'
+            '0101000020110F0000000000E0540D43C0000000A0FDDD65C0'
         )
 
     def test_should_calculate_a_geography_value(self):
