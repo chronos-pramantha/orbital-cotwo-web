@@ -24,26 +24,41 @@ DATABASES = ('gis', 'test', )  # two databases are created, one official and one
 
 
 class Xco2(Base):
+    """
+    Main table's model
+    """
+    #
+    # Table definition
+    # ------------------------------------------------------------------------
     __tablename__ = 't_co2'
 
     id = Column('id', Integer, primary_key=True)
     xco2 = Column('xco2', Float)
     timestamp = Column('timestamp', DateTime)
     # use a geography with coordinates
-    coordinates = Column('coordinates', Geography('POINT', srid=4326, spatial_index=True))
+    coordinates = Column(
+        'coordinates',
+        Geography('POINT', srid=4326, spatial_index=True)
+    )
     # use a geometry with pixels (for Web maps)
-    pixels = Column('pixels', Geometry('POINT', srid=3857, spatial_index=True))
-
+    pixels = Column(
+        'pixels',
+        Geometry('POINT', srid=3857, spatial_index=True)
+    )
     __table_args__ = (
         UniqueConstraint('timestamp', 'coordinates', name='uix_time_coords'),
     )
 
+    #
+    # Constructor
+    # ------------------------------------------------------------------------
     def __init__(self, xco2, timestamp, latitude, longitude):
         self.xco2 = xco2
         self.timestamp = timestamp
         self.latitude = latitude
         self.longitude = longitude
 
+    # #todo: implement the reconstructor (from query object to py object)
     """@orm.reconstructor
     def init_on_load(self):
         self.xco2 = self.xco2
