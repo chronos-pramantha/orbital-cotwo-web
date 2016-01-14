@@ -29,6 +29,20 @@ class TestDatabaseClass(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_should_create_a_xco2_obj(self):
+        """Create a Xco2 object using the constructor"""
+        new = Xco2(
+            xco2=self.luke.xco2,
+            timestamp=self.luke.timestamp,
+            latitude=self.luke.latitude,
+            longitude=self.luke.longitude
+        )
+        try:
+            repr(new)
+            str(new)
+        except Exception as e:
+            self.assertEquals(0, 1)
+
     def test_should_test_shape_geometry(self):
         """Test shape_geometry() """
         geom = Xco2.shape_geometry(

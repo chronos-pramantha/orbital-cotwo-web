@@ -12,6 +12,7 @@ __author__ = 'Lorenzo'
 #
 
 from sqlalchemy import create_engine
+from sqlalchemy import orm
 from sqlalchemy import Table, Column, Integer, Float, MetaData, DateTime
 from sqlalchemy import UniqueConstraint
 from geoalchemy2 import Geography, Geometry
@@ -37,15 +38,28 @@ class Xco2(Base):
         UniqueConstraint('timestamp', 'coordinates', name='uix_time_coords'),
     )
 
+    def __init__(self, xco2, timestamp, latitude, longitude):
+        self.xco2 = xco2
+        self.timestamp = timestamp
+        self.latitude = latitude
+        self.longitude = longitude
+
+    """@orm.reconstructor
+    def init_on_load(self):
+        self.xco2 = self.xco2
+        self.timestamp = self.timestamp
+        self.latitude = self._lat_long[0]
+        self.longitude = self._lat_long[1]"""
+
     def __repr__(self):
         return 'Point {coordinates!r}'.format(
-            coordinates=repr(self.coordinates)
+            coordinates=self._lat_long
         )
 
     def __str__(self):
         return 'Point {coordinates!s} has Xco2 level at {xco2!s}'.format(
-            coordinates=repr(self.coordinates),
-            xco2=str(self.xco2)
+            coordinates=self._lat_long,
+            xco2=self.xco2
         )
 
     @classmethod
@@ -65,6 +79,32 @@ class Xco2(Base):
             lat,
             long
         )
+
+    # #todo: implement descriptors ?
+    @property
+    def _lat_long(self):
+        """Return latitude and longitude"""
+        if hasattr(self, 'latitude') and hasattr(self, 'longitude'):
+            return self.latitude, self.longitude
+        else:
+            raise NotImplemented('This method is accessible only if the object'
+                                 'is created with the Xco2 constructor')
+
+    @property
+    def _coordinates(self):
+        if hasattr(self, 'latitude') and hasattr(self, 'longitude'):
+            return self.shape_geography(self.latitude, self.longitude)
+        else:
+            raise NotImplemented('This method is accessible only if the object'
+                                 'is created with the Xco2 constructor')
+
+    @property
+    def _pixels(self):
+        if hasattr(self, 'latitude') and hasattr(self, 'longitude'):
+            return self.shape_geometry(self.latitude, self.longitude)
+        else:
+            raise NotImplemented('This method is accessible only if the object'
+                                 'is created with the Xco2 constructor')
 
 
 def start_postgre_engine(db=None, echo=True):

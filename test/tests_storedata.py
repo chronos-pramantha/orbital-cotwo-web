@@ -13,7 +13,8 @@ from src.formatdata import create_generator_from_dataset, bulk_dump
 
 # #todo: implement 'luke' as a Mock()
 
-REFACTOR = False  # Flag to set during refactoring fo single test
+REFACTOR = False  # Flag to be set during refactoring for partial tests
+TEST_LENGTH = 20  # Number of rows to insert in the test db
 
 
 class DBtest(unittest.TestCase):
@@ -33,19 +34,17 @@ class DBtest(unittest.TestCase):
 
     def util_populate_table(self, session):
         # create an OCOpoint from the first record in the first file
-        self.test_length = 20
-        self.luke = create_generator_from_dataset(self.dataset, self.test_length)
+        self.test_length = TEST_LENGTH
+        luke = create_generator_from_dataset(self.dataset, self.test_length)
 
         session.add_all(
             [
                 Xco2(
                     xco2=d.xco2,
                     timestamp=d.timestamp,
-                    coordinates=Xco2.shape_geography(
-                        d.latitude,  d.longitude),
-                    pixels=Xco2.shape_geometry(
-                        d.latitude, d.longitude)
-                ) for d in self.luke
+                    latitude=d.latitude,
+                    longitude=d.longitude
+                ) for d in luke
             ]
         )
 
@@ -71,12 +70,34 @@ class DBtest(unittest.TestCase):
         #print(rows)
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
+    def test_should_create_xco2_obj_from_select_query(self):
+        #
+        pass
+
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_compare_data_between_db_and_dataset(self):
         ten = self.session.query(Xco2).limit(10)
-        lst = list(self.luke)[:9]
+        lst = list(create_generator_from_dataset(self.dataset, 10))
         for i, l in enumerate(lst):
             self.assertAlmostEqual(l.xco2, ten[i].xco2, delta=0.0000001)
             self.assertEqual(l.timestamp, ten[i].timestamp)
+
+    @unittest.skipIf(REFACTOR, 'Refactoring')
+    def test_should_insert_single_record(self):
+        luke = list(
+            create_generator_from_dataset(self.dataset, 21)
+        )[-1]
+        ins = Xco2.__table__.insert().values(
+            xco2=luke.xco2,
+            timestamp=luke.timestamp,
+            coordinates=Xco2.shape_geography(
+                luke.latitude,  luke.longitude),
+            pixels=Xco2.shape_geometry(
+                luke.latitude, luke.longitude)
+        )
+        self.conn.execute(ins)
+        rows = self.session.query(Xco2).count()
+        self.assertEqual(rows, self.test_length + 1)
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_bulk_dump(self):
@@ -92,21 +113,25 @@ class DBtest(unittest.TestCase):
         self.assertEqual(rows, 8)
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
-    def test_should_violate_unique_conatraint(self):
+    def test_should_violate_unique_constraint(self):
         """Test for integrity check"""
-        session1 = self.util_create_session(self.engine)
-        self.util_drop_table(session1)
-        bulk_dump(
-            self.session,
-            create_generator_from_dataset(self.dataset, 15)
+        luke = list(
+            create_generator_from_dataset(self.dataset, 21)
+        )[-1]
+        ins1 = ins2 = Xco2.__table__.insert().values(
+            xco2=luke.xco2,
+            timestamp=luke.timestamp,
+            coordinates=Xco2.shape_geography(
+                luke.latitude,  luke.longitude),
+            pixels=Xco2.shape_geometry(
+                luke.latitude, luke.longitude)
         )
-        # try to insert again the same record
-        session2 = self.util_create_session(self.engine)
+        self.conn.execute(ins1)
+
         self.assertRaises(
             IntegrityError,
-            bulk_dump,
-            session2,
-            create_generator_from_dataset(self.dataset, 1)
+            self.conn.execute,
+            ins2
         )
 
     def tearDown(self):

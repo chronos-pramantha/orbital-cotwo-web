@@ -70,10 +70,8 @@ def bulk_dump(session, objs_generator):
             new = Xco2(
                 xco2=obj.xco2,
                 timestamp=obj.timestamp,
-                coordinates=Xco2.shape_geography(
-                    obj.latitude,  obj.longitude),
-                pixels=Xco2.shape_geometry(
-                    obj.latitude, obj.longitude)
+                latitude=obj.latitude,
+                longitude=obj.longitude
             )
             session.add(new)
             session.commit()
