@@ -12,7 +12,7 @@ See also [here](https://help.ubuntu.com/community/PostgreSQL)
 
 Create a 'gis' and 'test' database and a 'gis' user with password 'gis' and privileges:
 ```
---- enter psql command line
+-- enter psql command line
 $> sudo -u postgres psql postgres
 
 $psql> \password postgres;
@@ -77,17 +77,19 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 * try `curl 127.0.0.1:5000`
 
 ## Run tests
-* `python test/tests_<some name>` to test functionality (use the `test` database)
+* `python test/tests_<some name>` to test functionality (it uses the `test` database)
 
 ## Status
 * Refactoring to PostGRE/PostGIS support [DONE]
 * Dump of data procedure complete [DONE]
-* Starting querying tests
+* BUG in storing method [FIXED]
+* Create a class for db operations [DONE]
+* Starting querying tests [DONE]
 * *TO BE IMPLEMENTED*: The server accepts POST request at `/oco2/by/area`. It needs a GeoJSON to be passed in the request's body.
 
 ## To-do
 * [PostGRE-PostGIS](http://postgis.net/) support
-* Write test queries
+* Write more test queries
 * Design the REST interface
 * Set up the Web server
 

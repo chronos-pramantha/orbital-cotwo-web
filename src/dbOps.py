@@ -98,7 +98,6 @@ class dbOps:
             except Exception as e:
                 raise e
 
-
     @classmethod
     def build_single_point_query(cls, lat, long, mode='geometry'):
         """
@@ -107,7 +106,7 @@ class dbOps:
         :param float lat: latitude
         :param float long: longitude
         :param str mode: geometry or geography
-        :return ResultProxy: query results
+        :return Query: query object
         """
         func = 'shape_' + mode if mode in ('geometry', 'geography',) else None
         if func:
