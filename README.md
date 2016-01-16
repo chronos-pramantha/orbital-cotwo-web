@@ -1,8 +1,75 @@
 # A Web interface for OCO2 data
 
 ## Run the code
-* install requirements (Python 3.3+ required)
-* install PostGRE SQL and PostGIS extensions as described in `WIKI.md` 
+* install requirements.txt (Python 3.4+ required)
+* install PostgreSQL and PostGIS extension. In Ubuntu:  
+```
+sudo apt-get install postgresql postgresql-contrib
+sudo apt-get install postgresql-server-dev-9.3
+sudo apt-get install postgresql-9.3-postgis-2.1
+```
+See also [here](https://help.ubuntu.com/community/PostgreSQL)
+
+Create a 'gis' and 'test' database and a 'gis' user with password 'gis' and privileges:
+```
+--- enter psql command line
+$> sudo -u postgres psql postgres
+
+$psql> \password postgres;
+(type password for 'root' user)
+
+$psql> CREATE USER gis;
+$psql> \password gis
+(type password for the 'gis' user)
+
+$psql> CREATE DATABASE gis;
+$psql> GRANT ALL PRIVILEGES ON DATABASE gis TO gis;
+
+$psql> CREATE DATABASE test;
+$psql> GRANT ALL PRIVILEGES ON DATABASE test TO gis;
+
+$psql> \connect gis
+$psql> CREATE EXTENSION postgis;
+
+$psql> \connect test
+$psql> CREATE EXTENSION postgis;
+```
+
+Check if everything is ok:
+```
+$psql> \dt+ t_co2;
+                     List of relations
+ Schema | Name  | Type  | Owner |    Size    | Description
+--------+-------+-------+-------+------------+-------------
+ public | t_co2 | table | gis   | 8192 bytes |
+(1 row)
+
+$psql> \d+ t_co2;
+                                                         Table "public.t_co2"
+   Column    |            Type             |                     Modifiers                      | St
+orage | Stats target | Description
+-------------+-----------------------------+----------------------------------------------------+---------+----------+
+ id          | integer                     | not null default nextval('t_co2_id_seq'::regclass) | plain   |          |
+ xco2        | double precision            |                                                    | plain   |          |
+ timestamp   | timestamp without time zone |                                                    | plain   |          |
+ coordinates | geography(Point,4326)       |                                                    | main    |          |
+ pixels      | geometry(Point,3857)        |                                                    | main    |          |
+Indexes:
+    "t_co2_pkey" PRIMARY KEY, btree (id)
+    "idx_t_co2_coordinates" gist (coordinates)
+    "idx_t_co2_pixels" gist (pixels)
+Has OIDs: no
+
+$psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co2';
+ constraint_catalog | constraint_schema |    constraint_name    | table_catalog | table_schema | table_name | constraint_type |
+--------------------+-------------------+-----------------------+---------------+--------------+------------+-----------------+
+ gis                | public            | t_co2_pkey            | gis           | public       | t_co2      | PRIMARY KEY     | 
+ gis                | public            | uix_time_coords       | gis           | public       | t_co2      | UNIQUE          | 
+ gis                | public            | 2200_24316_1_not_null | gis           | public       | t_co2      | CHECK           | 
+(3 rows)
+
+```
+
 * run `python src/xco2.py` to create database table
 * download files from NASA using the script in `files/` (you can use the Python script or `wget` with the txt file)
 * run `main.py` to dump data from files to db

@@ -5,11 +5,12 @@ __author__ = 'Lorenzo'
 
 from files.loadfiles import return_dataset, return_files_paths
 from src.formatdata import create_generator_from_dataset, bulk_dump
-from src.xco2 import start_postgre_engine
+from src.dbops import start_postgre_engine
 
+# TEST variable set in config/config.py
 # if true, only the first thousand rows of the first file are dumped
 # if false, all the files in files/nc4 are dumped (WARN: can take more than 30 minutes)
-TEST = True
+from config.config import TEST
 
 
 def main(test=TEST):
@@ -27,7 +28,8 @@ def main(test=TEST):
     #print(luke, )
 
     # consume the generator of generators
-    engine = start_postgre_engine('gis', True)
+    # change database name below ('test' or 'gis') to decide which one to use
+    _, engine = start_postgre_engine('test', True)
     with engine.connect() as conn:
         Session = sessionmaker()
         Session.configure(bind=engine)

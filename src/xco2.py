@@ -11,16 +11,16 @@ __author__ = 'Lorenzo'
 # as explained in WIKI.md
 #
 
-from sqlalchemy import create_engine
 from sqlalchemy import orm
 from sqlalchemy import Table, Column, Integer, Float, MetaData, DateTime
 from sqlalchemy import UniqueConstraint
 from geoalchemy2 import Geography, Geometry
 from sqlalchemy.ext.declarative import declarative_base
 
+from config.config import DATABASES
+
 
 Base = declarative_base()
-DATABASES = ('gis', 'test', )  # two databases are created, one official and one test
 
 
 class Xco2(Base):
@@ -122,33 +122,15 @@ class Xco2(Base):
                                  'is created with the Xco2 constructor')
 
 
-def start_postgre_engine(db=None, echo=True):
-    """
-    Return SQLAlchemy engine.
-
-    :param str db: name of the database
-    :param bool echo: print logging if True
-    :return: an instance of sqlalchemy.engine
-    """
-    user = 'gis'
-    pwd = 'gis'
-    db = db if db in DATABASES else 'test'
-    return create_engine(
-        'postgresql://{}:{}@localhost/{}'.format(
-            user, pwd, db
-        ),
-        echo=echo
-    )
-
-
-def create_tables_in_databases():
-    """Create a Schema to store CO2 data in the official and test databases"""
-
-    [Base.metadata.create_all(
-        start_postgre_engine(db),
-        checkfirst=True
-    ) for db in DATABASES]
-
-
 if __name__ == '__main__':
-    create_tables_in_databases()
+    try:
+        from src.dbops import dbOps
+        dbOps.create_tables_in_databases(Base)
+        print('####################################\n'
+              '#Databases and tables created      #\n'
+              '#Enter your psql command line and  #\n'
+              '#check that databases {} #\n'
+              '#and table t_co2 are present.      #\n'
+              '####################################\n'.format(DATABASES))
+    except Exception as e:
+        raise e
