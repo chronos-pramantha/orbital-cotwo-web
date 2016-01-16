@@ -99,7 +99,7 @@ class Xco2(Base):
     @property
     def _lat_long(self):
         """Return latitude and longitude"""
-        if hasattr(self, 'latitude') and hasattr(self, 'longitude'):
+        if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
             return self.latitude, self.longitude
         else:
             raise NotImplemented('This method is accessible only if the object'
@@ -107,7 +107,7 @@ class Xco2(Base):
 
     @property
     def _coordinates(self):
-        if hasattr(self, 'latitude') and hasattr(self, 'longitude'):
+        if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
             return self.shape_geography(self.latitude, self.longitude)
         else:
             raise NotImplemented('This method is accessible only if the object'
@@ -115,7 +115,7 @@ class Xco2(Base):
 
     @property
     def _pixels(self):
-        if hasattr(self, 'latitude') and hasattr(self, 'longitude'):
+        if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
             return self.shape_geometry(self.latitude, self.longitude)
         else:
             raise NotImplemented('This method is accessible only if the object'
