@@ -8,7 +8,7 @@ __author__ = 'Lorenzo'
 from src.xco2 import Xco2
 from src.dbops import dbOps, start_postgre_engine
 from files.loadfiles import return_files_paths, return_dataset
-from src.formatdata import create_generator_from_dataset, bulk_dump
+from src.formatdata import create_generator_from_dataset
 
 
 # #todo: implement 'luke' as a Mock()
@@ -17,7 +17,7 @@ REFACTOR = False  # Flag to be set during refactoring for partial tests
 TEST_LENGTH = 20  # Number of rows to insert in the test db
 
 
-# ##### UTILITIES FROM TESTS #################################################
+# ##### UTILITIES FOR TESTS ##################################################
 def util_populate_table(dataset, lentest, session):
     """
     Populate the t_co2 table with n rows
@@ -27,23 +27,24 @@ def util_populate_table(dataset, lentest, session):
     :param Session session:
     :return:
     """
-    # create an OCOpoint from the first record in the first file
+    # create a generator from the first lentest records in the dataset
     luke = create_generator_from_dataset(dataset, lentest)
 
-    session.add_all(
-        [
+    [
+        dbOps.store_xco2(
             Xco2(
                 xco2=d.xco2,
                 timestamp=d.timestamp,
                 latitude=d.latitude,
                 longitude=d.longitude
-            ) for d in luke
-        ]
-    )
+            )
+        ) for d in luke
+    ]
 
     session.commit()
 
-def util_drop_table(session):
+
+def util_truncate_table(session):
     """Utility to drop table's content"""
     try:
         session.query(Xco2).delete()
@@ -69,10 +70,14 @@ class DBtest(unittest.TestCase):
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_the_records_in_the_db(self):
-        """Perform a Select to check the data inserted above"""
+        """Perform a Select to check the data inserted in setUp"""
         rows = self.session.query(Xco2).count()
-        self.assertEqual(rows, self.test_length)
-        #print(rows)
+        try:
+            self.assertEqual(rows, self.test_length)
+            print('TEST PASSED')
+            #print(rows)
+        except AssertionError:
+            print('TEST FAILED')
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_create_xco2_obj_from_select_query(self):
@@ -84,8 +89,12 @@ class DBtest(unittest.TestCase):
         ten = self.session.query(Xco2).limit(10)
         lst = list(create_generator_from_dataset(self.dataset, 10))
         for i, l in enumerate(lst):
-            self.assertAlmostEqual(l.xco2, ten[i].xco2, delta=0.0000001)
-            self.assertEqual(l.timestamp, ten[i].timestamp)
+            try:
+                self.assertAlmostEqual(l.xco2, ten[i].xco2, delta=0.0000001)
+                self.assertEqual(l.timestamp, ten[i].timestamp)
+                print('TEST PASSED')
+            except AssertionError:
+                print('TEST FAILED')
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_insert_single_record(self):
@@ -102,20 +111,27 @@ class DBtest(unittest.TestCase):
         )
         self.conn.execute(ins)
         rows = self.session.query(Xco2).count()
-        self.assertEqual(rows, self.test_length + 1)
+        try:
+            self.assertEqual(rows, self.test_length + 1)
+            print('TEST PASSED')
+        except AssertionError:
+            print('TEST FAILED')
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_bulk_dump(self):
         """Test Xco2.bulk_dump()"""
         session2 = dbOps.create_session(self.engine)
-        util_drop_table(session2)
+        util_truncate_table(session2)
 
-        bulk_dump(
-            self.session,
+        dbOps.bulk_dump(
             create_generator_from_dataset(self.dataset, 8)
         )
         rows = self.session.query(Xco2).count()
-        self.assertEqual(rows, 8)
+        try:
+            self.assertEqual(rows, 8)
+            print('TEST PASSED')
+        except AssertionError:
+            print('TEST FAILED')
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_violate_unique_constraint(self):
@@ -133,16 +149,20 @@ class DBtest(unittest.TestCase):
         )
         self.conn.execute(ins1)
 
-        self.assertRaises(
-            IntegrityError,
-            self.conn.execute,
-            ins2
-        )
+        try:
+            self.assertRaises(
+                IntegrityError,
+                self.conn.execute,
+                ins2
+            )
+            print('TEST PASSED')
+        except AssertionError:
+            print('TEST FAILED')
 
     def tearDown(self):
         # if you want to keep the data in the db to make test using psql,
         # comment the line below
-        util_drop_table(self.session)
+        util_truncate_table(self.session)
         del self.session
         pass
 

@@ -41,7 +41,7 @@ class TestDatabaseClass(unittest.TestCase):
             repr(new)
             str(new)
         except Exception as e:
-            self.assertEquals(0, 1)
+            self.assertTrue(False)
 
     def test_should_test_shape_geometry(self):
         """Test shape_geometry() """
