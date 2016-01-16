@@ -7,6 +7,7 @@ It makes possible calculations over planar (geometry) or ellipsoidal (geography)
 #### Install PostGRE SQL database on Ubuntu
 ```
 sudo apt-get install postgresql postgresql-contrib
+sudo apt-get install postgresql-server-dev-9.3
 sudo apt-get install postgresql-9.3-postgis-2.1
 ```
 See also [here](https://help.ubuntu.com/community/PostgreSQL)
@@ -48,8 +49,7 @@ $psql> \d+ t_co2;
                                                          Table "public.t_co2"
    Column    |            Type             |                     Modifiers                      | St
 orage | Stats target | Description
--------------+-----------------------------+----------------------------------------------------+---
-------+--------------+-------------
+-------------+-----------------------------+----------------------------------------------------+---------+----------+
  id          | integer                     | not null default nextval('t_co2_id_seq'::regclass) | plain   |          |
  xco2        | double precision            |                                                    | plain   |          |
  timestamp   | timestamp without time zone |                                                    | plain   |          |

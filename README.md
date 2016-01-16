@@ -26,3 +26,6 @@
 
 ## Wiki
 see the `WIKI.md` file
+
+## Notes 
+* Developed on Python 3.5.1 and Postgre 9.3
