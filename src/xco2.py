@@ -106,7 +106,7 @@ class Xco2(Base):
                                  'is created with the Xco2 constructor')
 
     @property
-    def _coordinates(self):
+    def hash_coordinates(self):
         if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
             return self.shape_geography(self.latitude, self.longitude)
         else:
@@ -114,7 +114,7 @@ class Xco2(Base):
                                  'is created with the Xco2 constructor')
 
     @property
-    def _pixels(self):
+    def hash_pixels(self):
         if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
             return self.shape_geometry(self.latitude, self.longitude)
         else:
