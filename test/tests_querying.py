@@ -37,8 +37,22 @@ class TestQuerying(unittest.TestCase):
         lat, long = self.dataset['latitude'][i], self.dataset['longitude'][i]
         print(lat, long)
 
-        result = dbOps.get_a_single_point(lat, long)
-        print([r for r in res])
+        query = dbOps.build_single_point_query(lat, long)
+        #print(query)
+        res = self.conn.execute(query)
+        r = res.fetchone()
+        print(r.xco2, self.dataset['xco2'][i])
+        try:
+            self.assertAlmostEqual(
+                r.xco2,
+                self.dataset['xco2'][i],
+                delta=0.001
+            )
+            print('PASSED')
+        except AssertionError:
+            print('FAILED')
+        res.close()
+
 
     def tearDown(self):
         util_truncate_table(self.session)

@@ -1,6 +1,6 @@
 # coding=utf-8
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 
 __author__ = 'Lorenzo'
 
@@ -100,7 +100,7 @@ class dbOps:
 
 
     @classmethod
-    def get_a_single_point(cls, lat, long, mode='geometry'):
+    def build_single_point_query(cls, lat, long, mode='geometry'):
         """
         Build a query on Geometry or Geography field.
 
@@ -113,8 +113,8 @@ class dbOps:
         if func:
             fltr = getattr(Xco2, func)(lat, long)
             print(fltr)
-            query = cls.create_session().query(Xco2).filter_by(
-                coordinates=fltr
+            query = select([Xco2]).where(
+                Xco2.coordinates == fltr
             )
         else:
             raise ValueError('mode can be only geometry or geography')
