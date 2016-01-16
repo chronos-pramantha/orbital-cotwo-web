@@ -1,12 +1,12 @@
 # coding=utf-8
 import unittest
-from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.exc import IntegrityError
 
 
 __author__ = 'Lorenzo'
 
-from src.xco2 import start_postgre_engine, Xco2
+from src.xco2 import Xco2
+from src.dbops import dbOps, start_postgre_engine
 from files.loadfiles import return_files_paths, return_dataset
 from src.formatdata import create_generator_from_dataset, bulk_dump
 
@@ -17,50 +17,55 @@ REFACTOR = False  # Flag to be set during refactoring for partial tests
 TEST_LENGTH = 20  # Number of rows to insert in the test db
 
 
+# ##### UTILITIES FROM TESTS #################################################
+def util_populate_table(dataset, lentest, session):
+    """
+    Populate the t_co2 table with n rows
+
+    :param numpyArray dataset:
+    :param int lentest:
+    :param Session session:
+    :return:
+    """
+    # create an OCOpoint from the first record in the first file
+    luke = create_generator_from_dataset(dataset, lentest)
+
+    session.add_all(
+        [
+            Xco2(
+                xco2=d.xco2,
+                timestamp=d.timestamp,
+                latitude=d.latitude,
+                longitude=d.longitude
+            ) for d in luke
+        ]
+    )
+
+    session.commit()
+
+def util_drop_table(session):
+    """Utility to drop table's content"""
+    try:
+        session.query(Xco2).delete()
+        session.commit()
+    except:
+        session.rollback()
+# ##### ############### ######################################################
+
+
 class DBtest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.engine = start_postgre_engine('test', False)
+        _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
 
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
 
-    def util_create_session(self, engine):
-        Session = sessionmaker()
-        Session.configure(bind=engine)
-        session = Session()
-        return session
-
-    def util_populate_table(self, session):
-        # create an OCOpoint from the first record in the first file
-        self.test_length = TEST_LENGTH
-        luke = create_generator_from_dataset(self.dataset, self.test_length)
-
-        session.add_all(
-            [
-                Xco2(
-                    xco2=d.xco2,
-                    timestamp=d.timestamp,
-                    latitude=d.latitude,
-                    longitude=d.longitude
-                ) for d in luke
-            ]
-        )
-
-        session.commit()
-
-    def util_drop_table(self, session):
-        """Utility to drop table's content"""
-        try:
-            session.query(Xco2).delete()
-            session.commit()
-        except:
-            session.rollback()
-
     def setUp(self):
-        self.session = self.util_create_session(self.engine)
-        self.util_populate_table(self.session)
+        self.test_length = TEST_LENGTH
+        self.session = dbOps.create_session(self.engine)
+        util_populate_table(self.dataset, self.test_length, self.session)
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_the_records_in_the_db(self):
@@ -71,7 +76,7 @@ class DBtest(unittest.TestCase):
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_create_xco2_obj_from_select_query(self):
-        #
+        # to be implemented along with @orm.reconstructor
         pass
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
@@ -102,8 +107,8 @@ class DBtest(unittest.TestCase):
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_bulk_dump(self):
         """Test Xco2.bulk_dump()"""
-        session2 = self.util_create_session(self.engine)
-        self.util_drop_table(session2)
+        session2 = dbOps.create_session(self.engine)
+        util_drop_table(session2)
 
         bulk_dump(
             self.session,
@@ -137,7 +142,7 @@ class DBtest(unittest.TestCase):
     def tearDown(self):
         # if you want to keep the data in the db to make test using psql,
         # comment the line below
-        self.util_drop_table(self.session)
+        util_drop_table(self.session)
         del self.session
         pass
 
