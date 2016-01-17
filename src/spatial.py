@@ -14,26 +14,7 @@ class spatialRef(dbProxy):
     Handle spatial read operations on the database.
     """
     @classmethod
-    def connection(cls):
-        """Connect to the PostgreSQL database.  Returns a database connection."""
-        return psycopg2.connect('postgresql://{}:{}@localhost/{}'.format(
-                USER, PWD, DB
-            )
-        )
-
-    @classmethod
-    def _connected(cls, *args):
-        """Wrap execute() function to open and close properly connection and cursor"""
-        conn = cls.connection()
-        cur = conn.cursor()
-        cur.execute(args[0], args[1])
-        result = cur.fetchone()
-        cur.close()
-        conn.close()
-        return result
-
-    @classmethod
-    def unshape_geo_hash(cls, hash, ):
+    def unshape_geo_hash(cls, geohash, ):
         """Return a tuple of (lat, long, ) from a hashed geometry/geography.
 
         Example:
@@ -41,14 +22,19 @@ class spatialRef(dbProxy):
             --------------------------------------------------
             SRID=4326;POINT(11.111065864563 -7.45048522949219)
 
-        Outputs:
+        Possible outputs:
             ST_AsGEOJSON
             ST_AsLatLonText
             ST_AsText
             ST_X
             ST_Y
+
+        :param geohash: the value of a Geometry or Geography column
+        :return tuple: (longitude, latitude, )
         """
         return cls._connected(
-            "SELECT ST_X(%s), ST_Y(%s)", (hash, hash, )
+            "SELECT ST_X(%s), ST_Y(%s)",
+            **{'values': (geohash, geohash, )}
         )
+
 

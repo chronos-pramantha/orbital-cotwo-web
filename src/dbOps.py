@@ -1,6 +1,7 @@
 # coding=utf-8
+import psycopg2
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import create_engine, select
+from sqlalchemy import select, create_engine
 
 __author__ = 'Lorenzo'
 
@@ -31,7 +32,32 @@ class dbProxy:
     """
     Handle context variable for datbase access
     """
-    connection = ENGINE.connect()
+    alchemy = ENGINE.connect()
+
+    @classmethod
+    def connection(cls):
+        """Connect to the PostgreSQL database.  Returns a database connection."""
+        return psycopg2.connect('postgresql://{}:{}@localhost/{}'.format(
+                USER, PWD, DB
+            )
+        )
+
+    @classmethod
+    def _connected(cls, query, **kwargs):
+        """
+        Wrap execute() function to open and close properly connection and cursor.
+
+        """
+        conn = cls.connection()
+        cur = conn.cursor()
+        cur.execute(
+            query,
+            kwargs['values']
+        ) if kwargs.get('values') else cur.execute(query)
+        result = cur.fetchone() if not kwargs.get('multi') else cur.fetchall()
+        cur.close()
+        conn.close()
+        return result
 
     @classmethod
     def create_session(cls, engine=None):
@@ -71,6 +97,19 @@ class dbOps(dbProxy):
         ) for db in DATABASES]
 
     @classmethod
+    def get_by_id(cls, id):
+        """
+        Get a row by id.
+
+        :param id: an id from a row
+        :return tuple:
+        """
+        return cls._connected(
+            "SELECT * FROM t_co2 WHERE id = %s;",
+            **{'values': (id, ), 'multi': None}
+        )
+
+    @classmethod
     def store_xco2(cls, xobject):
         """Store a Xco2 relevation"""
         ins = Xco2.__table__.insert().values(
@@ -81,13 +120,15 @@ class dbOps(dbProxy):
             pixels=Xco2.shape_geometry(
                 xobject.longitude, xobject.latitude)
         )
-        result = cls.connection.execute(ins)
+        result = cls.alchemy.execute(ins)
         return result.inserted_primary_key
 
     @classmethod
     def bulk_dump(cls, objs_generator):
         """
         Dump in the database big amounts of objects from a generator.
+
+        # #todo: refactor using session and add_all()
 
         :param iter objs_generator:
         """
@@ -107,7 +148,7 @@ class dbOps(dbProxy):
                 raise e
 
     @classmethod
-    def build_single_point_query(cls, long, lat, mode='geometry'):
+    def single_point_query(cls, long, lat, mode='geometry'):
         """
         Build a query on Geometry or Geography field.
 
@@ -119,10 +160,10 @@ class dbOps(dbProxy):
         func = 'shape_' + mode if mode in ('geometry', 'geography',) else None
         if func:
             fltr = getattr(Xco2, func)(long, lat)
-            print(fltr)
             query = select([Xco2]).where(
                 Xco2.coordinates == fltr
             )
+            result = cls.alchemy.execute(query).fetchone()
         else:
             raise ValueError('mode can be only geometry or geography')
-        return query
+        return result

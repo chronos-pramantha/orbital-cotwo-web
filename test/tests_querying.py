@@ -37,11 +37,9 @@ class TestQuerying(unittest.TestCase):
         lat, long = self.dataset['latitude'][i], self.dataset['longitude'][i]
         #print(lat, long)
 
-        query = dbOps.build_single_point_query(long, lat)
+        r = dbOps.single_point_query(long, lat)
         # print(query)
-        res = self.conn.execute(query)
-        r = res.fetchone()
-        # print(r.xco2, self.dataset['xco2'][i])
+        #print(str(type(r)))
         try:
             self.assertAlmostEqual(
                 r.xco2,
@@ -51,16 +49,12 @@ class TestQuerying(unittest.TestCase):
             print('PASSED')
         except AssertionError:
             print('FAILED')
-        res.close()
 
     def test_unshape_geo_hash(self):
         i = randint(0, 10)
         lat, long = self.dataset['latitude'][i], self.dataset['longitude'][i]
 
-        query = dbOps.build_single_point_query(long, lat)
-        #print(query)
-        res = self.conn.execute(query)
-        r = res.fetchone()
+        r = dbOps.single_point_query(long, lat)
         #print(r.coordinates, r.pixels)
         st1 = spatialRef.unshape_geo_hash(str(r.coordinates))
         st2 = spatialRef.unshape_geo_hash(str(r.pixels))
@@ -69,8 +63,19 @@ class TestQuerying(unittest.TestCase):
             print('PASSED')
         except AssertionError:
             print('FAILED')
-        res.close()
 
+    def test_get_by_id(self):
+        i = randint(0, 10)
+        lat, long = self.dataset['latitude'][i], self.dataset['longitude'][i]
+        print(long, lat)
+
+        r = dbOps.single_point_query(long, lat)
+        r = dbOps.get_by_id(r.id)
+        # print(r)
+        st1 = spatialRef.unshape_geo_hash(r[3])
+        print(st1)
+        self.assertAlmostEqual(st1[0], long, delta=0.001)
+        self.assertAlmostEqual(st1[1], lat, delta=0.001 )
 
     def tearDown(self):
         util_truncate_table(self.session)

@@ -61,12 +61,11 @@ class Xco2(Base):
         self.longitude = longitude
 
     # #todo: implement the reconstructor (from query object to py object)
-    """@orm.reconstructor
+    @orm.reconstructor
     def init_on_load(self):
-        self.xco2 = self.xco2
-        self.timestamp = self.timestamp
-        self.latitude = self._lat_long[0]
-        self.longitude = self._lat_long[1]"""
+        from src.spatial import spatialRef
+        self.latitude = spatialRef.unshape_geo_hash(str(self.coordinates))[1]
+        self.longitude = spatialRef.unshape_geo_hash(str(self.coordinates))[0]
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(

@@ -7,6 +7,7 @@ __author__ = 'Lorenzo'
 
 from src.xco2 import Xco2
 from src.dbops import dbOps, start_postgre_engine
+from src.spatial import spatialRef
 from files.loadfiles import return_files_paths, return_dataset
 from src.formatdata import create_generator_from_dataset
 
@@ -40,8 +41,6 @@ def util_populate_table(dataset, lentest, session):
             )
         ) for d in luke
     ]
-
-    session.commit()
 
 
 def util_truncate_table(session):
@@ -101,15 +100,14 @@ class DBtest(unittest.TestCase):
         luke = list(
             create_generator_from_dataset(self.dataset, 21)
         )[-1]
-        ins = Xco2.__table__.insert().values(
-            xco2=luke.xco2,
-            timestamp=luke.timestamp,
-            coordinates=Xco2.shape_geography(
-                luke.latitude,  luke.longitude),
-            pixels=Xco2.shape_geometry(
-                luke.latitude, luke.longitude)
+        ins = dbOps.store_xco2(
+            Xco2(
+                xco2=luke.xco2,
+                timestamp=luke.timestamp,
+                latitude=luke.latitude,
+                longitude=luke.longitude
+            )
         )
-        self.conn.execute(ins)
         rows = self.session.query(Xco2).count()
         try:
             self.assertEqual(rows, self.test_length + 1)
@@ -139,20 +137,20 @@ class DBtest(unittest.TestCase):
         luke = list(
             create_generator_from_dataset(self.dataset, 21)
         )[-1]
-        ins1 = ins2 = Xco2.__table__.insert().values(
+        ins1 = ins2 = Xco2(
             xco2=luke.xco2,
             timestamp=luke.timestamp,
-            coordinates=Xco2.shape_geography(
-                luke.latitude,  luke.longitude),
-            pixels=Xco2.shape_geometry(
-                luke.latitude, luke.longitude)
+            latitude=luke.latitude,
+            longitude=luke.longitude
         )
-        self.conn.execute(ins1)
 
         try:
+            dbOps.store_xco2(
+                ins1
+            )
             self.assertRaises(
                 IntegrityError,
-                self.conn.execute,
+                dbOps.store_xco2,
                 ins2
             )
             print('TEST PASSED')
