@@ -4,9 +4,13 @@
 * install requirements.txt (Python 3.4+ required)
 * install PostgreSQL and PostGIS extension. In Ubuntu:  
 ```
+# depending on you Python version you could need also 
+# pythonX.Y-dev and /or libpg-dev
 sudo apt-get install postgresql postgresql-contrib
-sudo apt-get install postgresql-server-dev-9.3
-sudo apt-get install postgresql-9.3-postgis-2.1
+# substitute X.y with the version of potegresql installed
+sudo apt-get install postgresql-server-dev-X.Y
+# substitute Z.W with the version of postgis installed
+sudo apt-get install postgresql-X.Y-postgis-Z.W
 ```
 See also [here](https://help.ubuntu.com/community/PostgreSQL)
 
