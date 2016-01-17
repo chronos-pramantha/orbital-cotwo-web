@@ -64,8 +64,9 @@ class Xco2(Base):
     @orm.reconstructor
     def init_on_load(self):
         from src.spatial import spatialRef
-        self.latitude = spatialRef.unshape_geo_hash(str(self.coordinates))[1]
-        self.longitude = spatialRef.unshape_geo_hash(str(self.coordinates))[0]
+        unshape = spatialRef.unshape_geo_hash(str(self.coordinates))
+        self.latitude = unshape[1]
+        self.longitude = unshape[0]
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(

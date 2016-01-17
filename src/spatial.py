@@ -15,7 +15,7 @@ class spatialRef(dbProxy):
     """
     @classmethod
     def unshape_geo_hash(cls, geohash, ):
-        """Return a tuple of (lat, long, ) from a hashed geometry/geography.
+        """Return a tuple of (long, lat, ) from a hashed geometry/geography.
 
         Example:
             SELECT ST_AsEWKT('0101000020110F0000000000C0A947264000000020BB9165C0');
@@ -24,7 +24,6 @@ class spatialRef(dbProxy):
 
         Possible outputs:
             ST_AsGEOJSON
-            ST_AsLatLonText
             ST_AsText
             ST_X
             ST_Y
@@ -36,5 +35,23 @@ class spatialRef(dbProxy):
             "SELECT ST_X(%s), ST_Y(%s)",
             **{'values': (geohash, geohash, )}
         )
+
+    @classmethod
+    def exec_func_query(cls, query, multi=False):
+        """
+        Run a PostGIS query using GEOAlchemy.
+
+        Example:
+            >>> from sqlalchemy import func
+            >>> from src.dbops import dbOps
+            >>> query = select([Xco2.id, func.ST_AsGEOJSON(Xco2.coordinates)]).where(Xco2.id == some_id)
+            >>> spatialRef.exec_func_query(query)
+        :param str query: a custom query or a SQLAlchemy construct (select())
+        :param bool multi: set it to True if you expect multiple rows
+        :return tuple: data contained in required columns
+        """
+        proxy = cls.alchemy.execute(query)
+        return proxy.fetchone() if not multi else proxy.fetchall()
+
 
 
