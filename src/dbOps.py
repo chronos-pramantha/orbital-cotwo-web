@@ -24,20 +24,14 @@ def start_postgre_engine(db=None, echo=True):
         echo=echo
     )
 
-DB, ENGINE = start_postgre_engine()
+DB, ENGINE = start_postgre_engine(echo=False)
 
 
-class dbOps:
+class dbProxy:
+    """
+    Handle context variable for datbase access
+    """
     connection = ENGINE.connect()
-
-    @classmethod
-    def create_tables_in_databases(cls, base):
-        """Create a Schema to store CO2 data in the official and test databases"""
-
-        [base.metadata.create_all(
-            start_postgre_engine(db)[1],
-            checkfirst=True
-        ) for db in DATABASES]
 
     @classmethod
     def create_session(cls, engine=None):
@@ -62,6 +56,20 @@ class dbOps:
             session = Session()
         return session
 
+
+class dbOps(dbProxy):
+    """
+    Handle functions for non-spatial read/write operation on the db.
+    """
+    @classmethod
+    def create_tables_in_databases(cls, base):
+        """Create a Schema to store CO2 data in the official and test databases"""
+
+        [base.metadata.create_all(
+            start_postgre_engine(db)[1],
+            checkfirst=True
+        ) for db in DATABASES]
+
     @classmethod
     def store_xco2(cls, xobject):
         """Store a Xco2 relevation"""
@@ -69,9 +77,9 @@ class dbOps:
             xco2=xobject.xco2,
             timestamp=xobject.timestamp,
             coordinates=xobject.shape_geography(
-                xobject.latitude,  xobject.longitude),
+                xobject.longitude, xobject.latitude),
             pixels=Xco2.shape_geometry(
-                xobject.latitude, xobject.longitude)
+                xobject.longitude, xobject.latitude)
         )
         result = cls.connection.execute(ins)
         return result.inserted_primary_key
@@ -99,7 +107,7 @@ class dbOps:
                 raise e
 
     @classmethod
-    def build_single_point_query(cls, lat, long, mode='geometry'):
+    def build_single_point_query(cls, long, lat, mode='geometry'):
         """
         Build a query on Geometry or Geography field.
 
@@ -110,7 +118,7 @@ class dbOps:
         """
         func = 'shape_' + mode if mode in ('geometry', 'geography',) else None
         if func:
-            fltr = getattr(Xco2, func)(lat, long)
+            fltr = getattr(Xco2, func)(long, lat)
             print(fltr)
             query = select([Xco2]).where(
                 Xco2.coordinates == fltr

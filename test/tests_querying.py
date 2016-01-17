@@ -11,6 +11,7 @@ from files.loadfiles import return_files_paths, return_dataset
 
 from src.xco2 import Xco2
 from src.dbops import dbOps, start_postgre_engine
+from src.spatial import spatialRef
 from test.tests_storedata import util_populate_table, util_truncate_table
 
 TEST_LENGTH = 20
@@ -32,22 +33,39 @@ class TestQuerying(unittest.TestCase):
 
     def test_query_point_in_db(self):
         """Store and retrieve a point using Geometry and Geography"""
-        i = randint(0, 19)
-        print(i)
+        i = randint(0, 10)
         lat, long = self.dataset['latitude'][i], self.dataset['longitude'][i]
-        print(lat, long)
+        #print(lat, long)
 
-        query = dbOps.build_single_point_query(lat, long)
-        #print(query)
+        query = dbOps.build_single_point_query(long, lat)
+        # print(query)
         res = self.conn.execute(query)
         r = res.fetchone()
-        print(r.xco2, self.dataset['xco2'][i])
+        # print(r.xco2, self.dataset['xco2'][i])
         try:
             self.assertAlmostEqual(
                 r.xco2,
                 self.dataset['xco2'][i],
                 delta=0.001
             )
+            print('PASSED')
+        except AssertionError:
+            print('FAILED')
+        res.close()
+
+    def test_unshape_geo_hash(self):
+        i = randint(0, 10)
+        lat, long = self.dataset['latitude'][i], self.dataset['longitude'][i]
+
+        query = dbOps.build_single_point_query(long, lat)
+        #print(query)
+        res = self.conn.execute(query)
+        r = res.fetchone()
+        #print(r.coordinates, r.pixels)
+        st1 = spatialRef.unshape_geo_hash(str(r.coordinates))
+        st2 = spatialRef.unshape_geo_hash(str(r.pixels))
+        try:
+            self.assertEqual(st1, st2)
             print('PASSED')
         except AssertionError:
             print('FAILED')

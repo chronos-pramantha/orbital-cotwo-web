@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session, sessionmaker
 __author__ = 'Lorenzo'
 
 from files.loadfiles import return_dataset, return_files_paths
-from src.formatdata import create_generator_from_dataset, bulk_dump
-from src.dbops import start_postgre_engine
+from src.formatdata import create_generator_from_dataset
+from src.dbops import start_postgre_engine, dbOps
 
 # TEST variable set in config/config.py
 # if true, only the first thousand rows of the first file are dumped
@@ -31,12 +31,9 @@ def main(test=TEST):
     # change database name below ('test' or 'gis') to decide which one to use
     _, engine = start_postgre_engine('test', True)
     with engine.connect() as conn:
-        Session = sessionmaker()
-        Session.configure(bind=engine)
-        session = Session()
         while True:
             try:
-                bulk_dump(session, next(luke))
+                dbOps.bulk_dump(next(luke))
             except StopIteration:
                 return True
 
