@@ -9,7 +9,7 @@ from src.xco2 import Xco2
 from config.config import DATABASES, USER, PWD
 
 
-def start_postgre_engine(db=None, echo=True):
+def start_postgre_engine(db=None, echo=False):
     """
     Return SQLAlchemy engine.
 
@@ -17,7 +17,9 @@ def start_postgre_engine(db=None, echo=True):
     :param bool echo: print logging if True
     :return: an instance of sqlalchemy.engine
     """
-    db = db if db in DATABASES else 'test'
+    from config.config import TEST
+    # use the db in the argument or check the TEST variable
+    db = db if db and db in DATABASES else {True: 'test', False: 'gis'}.get(TEST)
     return db, create_engine(
         'postgresql://{}:{}@localhost/{}'.format(
             USER, PWD, db
@@ -25,7 +27,7 @@ def start_postgre_engine(db=None, echo=True):
         echo=echo
     )
 
-DB, ENGINE = start_postgre_engine(echo=False)
+DB, ENGINE = start_postgre_engine()   # set the db here
 
 
 class dbProxy:
@@ -46,7 +48,7 @@ class dbProxy:
     def _connected(cls, query, **kwargs):
         """
         Wrap execute() function to open and close properly connection and cursor.
-
+        Use psycopg2 as driver.
         """
         conn = cls.connection()
         cur = conn.cursor()
