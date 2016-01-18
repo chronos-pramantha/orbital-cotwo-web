@@ -81,7 +81,7 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 * try `curl 127.0.0.1:5000`
 
 ## Run tests
-* `python test/tests_<some name>` to test functionality (it uses the `test` database)
+* `python3 test/run_test.py` to test functionality (it uses the `test` database)
 
 ## Status
 * Refactoring to PostGRE/PostGIS support [DONE]
