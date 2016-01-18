@@ -19,7 +19,7 @@ TEST_LENGTH = 20  # Number of rows to insert in the test db
 
 
 # ##### UTILITIES FOR TESTS ##################################################
-def util_populate_table(dataset, lentest, session):
+def util_populate_table(dataset, lentest):
     """
     Populate the t_co2 table with n rows
 
@@ -43,19 +43,25 @@ def util_populate_table(dataset, lentest, session):
     ]
 
 
-def util_truncate_table(session):
+def util_truncate_table(session, table=[Xco2]):
     """Utility to drop table's content"""
     try:
-        session.query(Xco2).delete()
+        [session.query(t).delete() for t in table]
         session.commit()
     except:
         session.rollback()
 # ##### ############### ######################################################
 
 
-class DBtest(unittest.TestCase):
+class DBtestStoring(unittest.TestCase):
+    """
+Test storing operations on the database for t_co2 table
+(t_areas table's are in tests_querying_spatial).
+
+"""
     @classmethod
     def setUpClass(cls):
+        print(cls.__doc__)
         _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
 
@@ -65,7 +71,7 @@ class DBtest(unittest.TestCase):
     def setUp(self):
         self.test_length = TEST_LENGTH
         self.session = dbOps.create_session(self.engine)
-        util_populate_table(self.dataset, self.test_length, self.session)
+        util_populate_table(self.dataset, self.test_length)
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_the_records_in_the_db(self):

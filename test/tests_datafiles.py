@@ -11,7 +11,15 @@ __author__ = 'Lorenzo'
 from files.loadfiles import return_files_paths, return_dataset
 
 
-class DataFiles(unittest.TestCase):
+class TestDataFiles(unittest.TestCase):
+    """
+Test files' paths.
+
+"""
+    @classmethod
+    def setUpClass(cls):
+        print(cls.__doc__)
+
     def setUp(self):
         self.paths = return_files_paths()
 

@@ -19,8 +19,13 @@ TEST_LENGTH = 20
 
 
 class TestQuerying(unittest.TestCase):
+    """
+Test querying the Xco2 mapper and the t_co2 table.
+
+"""
     @classmethod
     def setUpClass(cls):
+        print(cls.__doc__)
         _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
 
@@ -31,7 +36,7 @@ class TestQuerying(unittest.TestCase):
         self.test_length = TEST_LENGTH
         self.session = dbOps.create_session(self.engine)
         # insert some rows
-        util_populate_table(self.dataset, self.test_length, self.session)
+        util_populate_table(self.dataset, self.test_length)
         # pick a random sample
         self.i = randint(0, 9)
         self.lat, self.long = self.dataset['latitude'][self.i], self.dataset['longitude'][self.i]

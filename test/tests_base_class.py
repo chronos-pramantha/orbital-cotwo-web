@@ -3,15 +3,20 @@ import unittest
 
 __author__ = 'Lorenzo'
 
-from src.xco2 import Xco2, start_postgre_engine
+from src.xco2 import Xco2
+from src.dbops import start_postgre_engine
 from files.loadfiles import return_files_paths, return_dataset
 from src.formatdata import createOCOpoint
 
 
-class TestDatabaseClass(unittest.TestCase):
+class TestXco2TableClass(unittest.TestCase):
+    """
+Test the object mapper to table t_co2.
+"""
     @classmethod
     def setUpClass(cls):
-        cls.engine = start_postgre_engine('test', False)
+        print(cls.__doc__)
+        _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
 
         cls.paths = return_files_paths()
@@ -43,37 +48,9 @@ class TestDatabaseClass(unittest.TestCase):
         except Exception as e:
             self.assertTrue(False)
 
-    def test_should_test_shape_geometry(self):
-        """Test shape_geometry() """
-        geom = Xco2.shape_geometry(
-            self.luke.latitude,
-            self.luke.longitude
-        )
-        #print(geom)
-        self.assertEqual(
-            geom,
-            'SRID=3857;POINT({} {})'.format(
-                self.luke.latitude, self.luke.longitude
-            )
-        )
-
-    def test_should_test_shape_geography(self):
-        """Test shape_geography() """
-        geog = Xco2.shape_geography(
-            self.luke.latitude,
-            self.luke.longitude
-        )
-        #print(geom)
-        self.assertEqual(
-            geog,
-            'SRID=4326;POINT({} {})'.format(
-                self.luke.latitude, self.luke.longitude
-            )
-        )
-
     def test_should_calculate_a_geometry_value(self):
         """Test: SELECT * FROM ST_GeomFromEWKT('POINT(latitude longitude)'); """
-        geom_EWKT = 'SRID=3857;POINT(-38.10415267944336 -174.9372100830078)'
+        geom_EWKT = 'SRID=3857;POINT(-174.9372100830078 -38.10415267944336)'
         q = "SELECT ST_GeomFromEWKT('{}');".format(geom_EWKT)
         #print(q)
         try:
@@ -83,12 +60,12 @@ class TestDatabaseClass(unittest.TestCase):
                             'Check if PostGIS extensions are installed.')
         self.assertEqual(
             str([r for r in result][0][0]),
-            '0101000020110F0000000000E0540D43C0000000A0FDDD65C0'
+            '0101000020110F0000000000A0FDDD65C0000000E0540D43C0'
         )
 
     def test_should_calculate_a_geography_value(self):
         """Test: SELECT * FROM ST_GeogFromText('SRID;POINT(latitude longitude)'); """
-        geog_EWKT = 'SRID=4326;POINT(-38.10415267944336 -174.9372100830078)'
+        geog_EWKT = 'SRID=4326;POINT(-174.9372100830078 -38.10415267944336)'
         q = "SELECT ST_GeogFromText('{}');".format(geog_EWKT)
         try:
             result = self.conn.execute(q)
@@ -97,7 +74,7 @@ class TestDatabaseClass(unittest.TestCase):
                             'Check if PostGIS extensions are installed.')
         self.assertEqual(
             str([r for r in result][0][0]),
-            '0101000020E6100000000000E0540D43C0000000004C4014C0'
+            '0101000020E6100000000000A0FDDD65C0000000E0540D43C0'
         )
 
     def test_should_return_db_table_fields(self):

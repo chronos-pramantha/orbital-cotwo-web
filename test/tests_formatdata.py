@@ -13,9 +13,14 @@ from files.loadfiles import return_files_paths
 from src.formatdata import createOCOpoint, create_generator_from_dataset
 
 
-class DataFormat(unittest.TestCase):
+class TestDataFormat(unittest.TestCase):
+    """
+Test loading from netCDF files.
+
+"""
     @classmethod
     def setUpClass(cls):
+        print(cls.__doc__)
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
         cls.length = len(cls.dataset['latitude'])
