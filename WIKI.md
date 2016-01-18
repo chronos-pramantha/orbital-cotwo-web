@@ -21,7 +21,18 @@ Choosing a [map projection (1)](https://source.opennews.org/en-US/learning/choos
 EPSG [3857](http://wiki.openstreetmap.org/wiki/EPSG:3857) and popular [Web maps providers](http://gis.stackexchange.com/questions/48949/epsg-3857-or-4326-for-googlemaps-openstreetmap-and-leaflet).
 
 
-#### create a PostGIS database
+#### Some queries working on our test database
+
+```
+-- Cast a EWKT string into a Geometry:
+SELECT 'SRID=3857;POLYGON(((-179.748110962 -22.8178), (-178.348110962 -22.8178), (-179.048 -22.1178405762), (-179.048 -23.5178405762), (-179.748110962 -22.8178), ))'::geometry;
+
+-- Insert and then fetch a polygon by its center:
+INSERT INTO t_areas(center, aoi) VALUES ('SRID=3857;POINT(-179.048 -22.8178)',  'SRID=3857;POLYGON((-179.748110962 -22.8178, -178.348110962 -22.8178, -179.048 -22.1178405762, -179.048 -23.5178405762, -179.748110962 -22.8178))');
+SELECT  * FROM t_areas WHERE center = 'SRID=3857;POINT(-179.048 -22.8178)';
+```
+
+#### Notes on creating a PostGIS database
 From psql command line:
 ```
 CREATE DATABASE gisdb;
@@ -54,7 +65,7 @@ CREATE EXTENSION pointcloud;
 CREATE EXTENSION pointcloud_postgis;
 ```
 
-#### create indexes
+#### Notes on creating indexes
 ```
 -- index on geometry field, to boost coordinates lookup
 CREATE INDEX idx_table_geom
@@ -67,7 +78,7 @@ ON table
 USING btree(some_field);
 ```
 
-#### create a geometry column in PostGIS 2:
+#### Notes on creating a geometry column in PostGIS 2:
 ```
 -- Add a point using the old constraint based behavior
 SELECT AddGeometryColumn ('my_schema','my_spatial_table','geom_c',4326,'POINT',2, false);
@@ -87,7 +98,7 @@ UPDATE table SET geom = ST_SetSRID(ST_MakePoint(longitude,latitude),4326);
 CREATE INDEX idx_table_geom ON table USING GIST(geom);
 ```
 
-#### create a geography column
+#### Notes on creating a geography column
 ```
 CREATE TABLE testgeog(gid serial PRIMARY KEY, the_geog geography(POINT,4326) );
 ```
