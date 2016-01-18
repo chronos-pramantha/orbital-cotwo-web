@@ -32,7 +32,14 @@ DB, ENGINE = start_postgre_engine()   # set the db here
 
 class dbProxy:
     """
-    Handle context variable for datbase access
+    Handle context variable for database access.
+
+    It let perform the query in two ways:
+    - using the psycopg2 driver's cursor with the `_connected()` and
+     `connection()` methods
+    - using SQLAlchemy by creating a session with `create_session()` if high-level
+     ORM functions or transactions are needed or directly using `alchemy.execute(query)`.
+    These methods can guarantee a quite flexible use fo the database.
     """
     alchemy = ENGINE.connect()
 
@@ -114,12 +121,13 @@ class dbOps(dbProxy):
     @classmethod
     def store_xco2(cls, xobject):
         """Store a Xco2 relevation"""
+        from src.spatial import spatialRef
         ins = Xco2.__table__.insert().values(
             xco2=xobject.xco2,
             timestamp=xobject.timestamp,
-            coordinates=xobject.shape_geography(
+            coordinates=spatialRef.shape_geography(
                 xobject.longitude, xobject.latitude),
-            pixels=Xco2.shape_geometry(
+            pixels=spatialRef.shape_geometry(
                 xobject.longitude, xobject.latitude)
         )
         result = cls.alchemy.execute(ins)
@@ -159,9 +167,10 @@ class dbOps(dbProxy):
         :param str mode: geometry or geography
         :return Query: query object
         """
+        from src.spatial import spatialRef
         func = 'shape_' + mode if mode in ('geometry', 'geography',) else None
         if func:
-            fltr = getattr(Xco2, func)(long, lat)
+            fltr = getattr(spatialRef, func)(long, lat)
             query = select([Xco2]).where(
                 Xco2.coordinates == fltr
             )

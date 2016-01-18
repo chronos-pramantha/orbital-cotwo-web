@@ -94,6 +94,7 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 ## To-do
 * [PostGRE-PostGIS](http://postgis.net/) support
 * Write more test queries
+* Implement a caching/lookup/aggregation table for the main table
 * Design the REST interface
 * Set up the Web server
 
