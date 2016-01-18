@@ -40,7 +40,16 @@ class spatialRef(dbProxy):
         n: Y + 0.5*height
         s: Y - 0.5*height
 
-        Create a Geography(4326), ST_Transform in Geometry(3857)"""
+        Reminder:
+           Geography(SRID=4326)
+           Geometry(SRID=3857)
+
+        Example query to cast a EWKT string in Geometry type:
+            SELECT 'SRID=3857;POLYGON(((-179.748110962 -22.8178), (-178.348110962 -22.8178),
+            (-179.048 -22.1178405762), (-179.048 -23.5178405762), (-179.748110962 -22.8178), ))'::geometry;
+
+        :return tuple: polygon's EWKT and center's EWKT
+        """
         SIZE = 1.4  # polygon side = 1.4 degree
         polygon = []
         polygon.append([center[0] - 0.5*SIZE, center[1]])
@@ -49,13 +58,16 @@ class spatialRef(dbProxy):
         polygon.append([center[0], center[1] - 0.5*SIZE])
         polygon.append([center[0] - 0.5*SIZE, center[1]])
         string = str()
-        for i in polygon:
-            string += '(' + str(i[0]) + ' ' + str(i[1]) + '), '
+        for i, p in enumerate(polygon):
+            string += str(p[0]) + ' ' + str(p[1])
+            if i != len(polygon) - 1:
+                string += ', '
 
         shape = 'SRID=3857;POLYGON(({polygon}))'.format(
             polygon=string
         )
-        return shape
+
+        return shape, cls.shape_geometry(center[0], center[1])
 
     @classmethod
     def unshape_geo_hash(cls, geohash, ):
@@ -100,4 +112,5 @@ class spatialRef(dbProxy):
         return proxy.first() if not multi else proxy.fetchall()
 
 
-
+__all__ = ['shape_geometry',
+           'shape_geography']

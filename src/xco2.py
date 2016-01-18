@@ -92,16 +92,18 @@ class Xco2(Base):
 
     @property
     def hash_coordinates(self):
+        from src.spatial import shape_geography
         if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
-            return self.shape_geography(self.longitude, self.latitude)
+            return shape_geography(self.longitude, self.latitude)
         else:
             raise NotImplemented('This method is accessible only if the object'
                                  'is created with the Xco2 constructor')
 
     @property
     def hash_pixels(self):
+        from src.spatial import shape_geometry
         if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
-            return self.shape_geometry(self.longitude, self.latitude)
+            return shape_geometry(self.longitude, self.latitude)
         else:
             raise NotImplemented('This method is accessible only if the object'
                                  'is created with the Xco2 constructor')
