@@ -88,8 +88,10 @@ class DBtest(unittest.TestCase):
         ten = self.session.query(Xco2).limit(10)
         lst = list(create_generator_from_dataset(self.dataset, 10))
         for i, l in enumerate(lst):
+            #print(str(type(ten[i].xco2)), ten[i].xco2)
+            #print(str(type(l.xco2)), l.xco2)
             try:
-                self.assertAlmostEqual(l.xco2, ten[i].xco2, delta=0.0000001)
+                self.assertAlmostEqual(l.xco2, float(ten[i].xco2), delta=0.0000001)
                 self.assertEqual(l.timestamp, ten[i].timestamp)
                 print('TEST PASSED')
             except AssertionError:

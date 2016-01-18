@@ -46,7 +46,7 @@ class TestQuerying(unittest.TestCase):
         #print(str(type(r)))
         try:
             self.assertAlmostEqual(
-                r.xco2,
+                float(r.xco2),
                 self.dataset['xco2'][self.i],
                 delta=0.001
             )
@@ -65,7 +65,7 @@ class TestQuerying(unittest.TestCase):
         try:
             self.assertEqual(st1, st2)
             print('PASSED')
-        except AssertionError:
+        except AssertionError as e:
             print('FAILED')
             raise e
 
@@ -90,16 +90,23 @@ class TestQuerying(unittest.TestCase):
         print('##### TEST4 #####')
         import json
         table = Xco2
+        # get a random row
         id_ = dbOps.single_point_query(self.long, self.lat).id
+        # build a query
         query = select(
             [table.id, func.ST_AsGEOJSON(table.coordinates)]
-        ).where(Xco2.id == id_)
+        ).where(table.id == id_)
+        # print a compiled statement
+        #print(str(query.compile()))
+        # execute query
         result = spatialRef.exec_func_query(query)
         # the query asked for a JSON
         result = json.loads(result[1])
         try:
-            self.assertAlmostEqual(result['coordinates'][0], self.long, delta=0.0001)
-            self.assertAlmostEqual(result['coordinates'][1], self.lat, delta=0.0001)
+            #print(str(type(result['coordinates'][0])), result['coordinates'][0])
+            #print(str(type(self.long)), float(self.long))
+            self.assertAlmostEqual(result['coordinates'][0], self.long, delta=0.001)
+            self.assertAlmostEqual(result['coordinates'][1], self.lat, delta=0.001)
             print('PASSED')
         except AssertionError as e:
             print('FAILED')
