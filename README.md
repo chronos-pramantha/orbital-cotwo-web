@@ -5,7 +5,7 @@
 * install PostgreSQL and PostGIS extension. In Ubuntu:  
 ```
 # depending on you Python version you could need also 
-# pythonX.Y-dev and /or libpg-dev
+# pythonX.Y-dev and/or libpg-dev
 sudo apt-get install postgresql postgresql-contrib
 # substitute X.y with the version of potegresql installed
 sudo apt-get install postgresql-server-dev-X.Y
@@ -102,4 +102,6 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 see the `WIKI.md` file
 
 ## Notes 
-* Developed on Python 3.5.1 and Postgre 9.3
+* Developed on Python 3.5.1 and Postgre 9.3, on Ubuntu Trusty Tahr 64bit
+* Python dependencies require different packages to be installed via `apt-get` in your Linux system (for example `netcdf4` requires `libhdf5-serial-dev`, `netcdf-bin`
+   and `libnetcdf-dev`; `psycopg2` may need `pglib-dev`; etc.)
