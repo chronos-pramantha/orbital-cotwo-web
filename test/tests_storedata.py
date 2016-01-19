@@ -76,6 +76,7 @@ Test storing operations on the database for t_co2 table
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_the_records_in_the_db(self):
         """Perform a Select to check the data inserted in setUp"""
+        print('#### TEST1 ####')
         rows = self.session.query(Xco2).count()
         try:
             self.assertEqual(rows, self.test_length)
@@ -87,10 +88,13 @@ Test storing operations on the database for t_co2 table
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_create_xco2_obj_from_select_query(self):
         # to be implemented along with @orm.reconstructor
+        print('#### TEST2 ####')
+        print('TEST PASSED')
         pass
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_compare_data_between_db_and_dataset(self):
+        print('#### TEST3 ####')
         ten = self.session.query(Xco2).limit(10)
         lst = list(create_generator_from_dataset(self.dataset, 10))
         for i, l in enumerate(lst):
@@ -99,12 +103,14 @@ Test storing operations on the database for t_co2 table
             try:
                 self.assertAlmostEqual(l.xco2, float(ten[i].xco2), delta=0.0000001)
                 self.assertEqual(l.timestamp, ten[i].timestamp)
-                print('TEST PASSED')
-            except AssertionError:
+            except AssertionError as e:
                 print('TEST FAILED')
+                raise e
+        print('TEST PASSED')
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_insert_single_record(self):
+        print('#### TEST4 ####')
         luke = list(
             create_generator_from_dataset(self.dataset, 21)
         )[-1]
@@ -126,6 +132,7 @@ Test storing operations on the database for t_co2 table
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_bulk_dump(self):
         """Test Xco2.bulk_dump()"""
+        print('#### TEST5 ####')
         session2 = dbOps.create_session(self.engine)
         util_truncate_table(session2)
 
@@ -142,6 +149,7 @@ Test storing operations on the database for t_co2 table
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_violate_unique_constraint(self):
         """Test for integrity check"""
+        print('#### TEST6 ####')
         luke = list(
             create_generator_from_dataset(self.dataset, 21)
         )[-1]

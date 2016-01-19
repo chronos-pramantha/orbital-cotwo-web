@@ -12,7 +12,7 @@ Create database table and bind to persistence layer (PostGRE/PostGIS)
 
 from sqlalchemy import orm
 from sqlalchemy import Table, Column, Integer, MetaData, DateTime
-from sqlalchemy.dialects.postgresql import JSON, NUMERIC
+from sqlalchemy.dialects.postgresql import JSON, DOUBLE_PRECISION
 from sqlalchemy import UniqueConstraint
 from geoalchemy2 import Geography, Geometry
 from sqlalchemy.ext.declarative import declarative_base
@@ -34,7 +34,7 @@ class Xco2(Base):
     __tablename__ = 't_co2'
 
     id = Column('id', Integer, primary_key=True)
-    xco2 = Column('xco2', NUMERIC(precision=18), nullable=False)
+    xco2 = Column('xco2', DOUBLE_PRECISION(precision=11), nullable=False)
     timestamp = Column('timestamp', DateTime, nullable=False)
     # use a geography with coordinates
     coordinates = Column(
@@ -176,4 +176,6 @@ if __name__ == '__main__':
               '#and table t_co2, t_areas are present. #\n'
               '####################################\n'.format(DATABASES))
     except Exception as e:
+        print('##### ERROR: have you crated the databases ####'
+              'and installed the \'postgis\' extension?  ####')
         raise e
