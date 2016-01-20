@@ -11,7 +11,7 @@ Create database table and bind to persistence layer (PostGRE/PostGIS)
 """
 
 from sqlalchemy import orm
-from sqlalchemy import Table, Column, Integer, MetaData, DateTime
+from sqlalchemy import Column, Integer, DateTime
 from sqlalchemy.dialects.postgresql import JSON, DOUBLE_PRECISION
 from sqlalchemy import UniqueConstraint
 from geoalchemy2 import Geography, Geometry
@@ -64,8 +64,8 @@ class Xco2(Base):
     # #todo: implement the reconstructor (from query object to py object)
     @orm.reconstructor
     def init_on_load(self):
-        from src.spatial import spatialRef
-        unshape = spatialRef.unshape_geo_hash(str(self.coordinates))
+        from src.spatial import spatialOps
+        unshape = spatialOps.unshape_geo_hash(str(self.coordinates))
         self.latitude = unshape[1]
         self.longitude = unshape[0]
 
@@ -147,12 +147,16 @@ class Areas(Base):
         UniqueConstraint('aoi', 'center', name='uix_aoi_center'),
     )
 
-    def __init__(self, long, lat):
-        from src.spatial import spatialRef
-        self.long = long
-        self.lat = lat
-        self.center = spatialRef.shape_geometry(long, lat)
-        self.aoi = spatialRef.shape_aoi((long, lat))
+    def __init__(self, center, data=None):
+        from src.spatial import spatialOps
+        from src.areasops import add_point_or_create_geojson
+        self.center = center
+        self.aoi = spatialOps.shape_aoi(self.center)
+        if not data:
+            self.data = add_point_or_create_geojson(self.center)
+        else:
+            raise ValueError('Areas can be used only as a constructor when '
+                             'Aoi are created')
 
     def __repr__(self):
         return 'Area POLYGON: {aoi!r}'.format(
@@ -167,8 +171,8 @@ class Areas(Base):
 
 if __name__ == '__main__':
     try:
-        from src.dbops import dbOps
-        dbOps.create_tables_in_databases(Base)
+        from src.dbproxy import dbProxy
+        dbProxy.create_tables_in_databases(Base)
         print('####################################\n'
               '#Databases and tables created      #\n'
               '#Enter your psql command line and  #\n'

@@ -1,13 +1,14 @@
 # coding=utf-8
+"""
+Proxy class for all connections
+"""
 import psycopg2
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import select, create_engine
 
 __author__ = 'Lorenzo'
 
-from src.xco2 import Xco2
 from config.config import DATABASES, USER, PWD
-
 
 def start_postgre_engine(db=None, echo=False):
     """
@@ -69,7 +70,7 @@ class dbProxy:
         return result
 
     @classmethod
-    def create_session(cls, engine=None):
+    def create_session(cls, db='gis', engine=None):
         """
         Start a session.
 
@@ -85,17 +86,12 @@ class dbProxy:
             session = Session()
         else:
             # fallback: create a new engine
-            engine = start_postgre_engine('test', False)
+            engine = start_postgre_engine(db, False)
             Session = sessionmaker()
             Session.configure(bind=engine)
             session = Session()
         return session
 
-
-class dbOps(dbProxy):
-    """
-    Handle functions for non-spatial read/write operation on the db.
-    """
     @classmethod
     def create_tables_in_databases(cls, base):
         """Create a Schema to store CO2 data in the official and test databases"""
@@ -106,75 +102,21 @@ class dbOps(dbProxy):
         ) for db in DATABASES]
 
     @classmethod
-    def get_by_id(cls, id):
+    def get_by_id(cls, row_id,  table=None):
         """
         Get a row by id.
 
-        :param id: an id from a row
+        :param row_id: an id from a row
+        :param object table: the mapper object of a table
         :return tuple:
         """
+        from src.xco2 import Xco2
+        if not table:
+            table = Xco2
         return cls._connected(
-            "SELECT * FROM t_co2 WHERE id = %s;",
-            **{'values': (id, ), 'multi': None}
+            'SELECT * FROM %s WHERE id = %s;',
+            **{
+                'values': (table.__tablename__, row_id, ),
+                'multi': None
+            }
         )
-
-    @classmethod
-    def store_xco2(cls, xobject):
-        """Store a Xco2 relevation"""
-        from src.spatial import spatialRef
-        ins = Xco2.__table__.insert().values(
-            xco2=xobject.xco2,
-            timestamp=xobject.timestamp,
-            coordinates=spatialRef.shape_geography(
-                xobject.longitude, xobject.latitude),
-            pixels=spatialRef.shape_geometry(
-                xobject.longitude, xobject.latitude)
-        )
-        result = cls.alchemy.execute(ins)
-        return result.inserted_primary_key
-
-    @classmethod
-    def bulk_dump(cls, objs_generator):
-        """
-        Dump in the database big amounts of objects from a generator.
-
-        # #todo: refactor using session and add_all()
-
-        :param iter objs_generator:
-        """
-        while True:
-            try:
-                obj = next(objs_generator)
-                new = Xco2(
-                    xco2=obj.xco2,
-                    timestamp=obj.timestamp,
-                    latitude=obj.latitude,
-                    longitude=obj.longitude
-                )
-                cls.store_xco2(new)
-            except StopIteration:
-                return
-            except Exception as e:
-                raise e
-
-    @classmethod
-    def single_point_query(cls, long, lat, mode='geometry'):
-        """
-        Build a query on Geometry or Geography field.
-
-        :param float lat: latitude
-        :param float long: longitude
-        :param str mode: geometry or geography
-        :return Query: query object
-        """
-        from src.spatial import spatialRef
-        func = 'shape_' + mode if mode in ('geometry', 'geography',) else None
-        if func:
-            fltr = getattr(spatialRef, func)(long, lat)
-            query = select([Xco2]).where(
-                Xco2.coordinates == fltr
-            )
-            result = cls.alchemy.execute(query).fetchone()
-        else:
-            raise ValueError('mode can be only geometry or geography')
-        return result

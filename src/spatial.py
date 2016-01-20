@@ -5,18 +5,22 @@ from sqlalchemy import func, select
 __author__ = 'Lorenzo'
 
 from src.xco2 import Xco2, Areas
-from src.dbops import dbProxy
-from config.config import USER, PWD
+from src.dbproxy import dbProxy
 
 
-class spatialRef(dbProxy):
+class spatialOps(dbProxy):
     """
     Handle spatial read operations on the database.
     """
     @classmethod
     def shape_geometry(cls, long, lat):
-        """Return a EWKT string representing a point, to be passed to
-        `ST_GeomFromEWKT` PostGIS function"""
+        """
+        Return a EWKT string representing a point.
+
+        :param long:
+        :param lat:
+        :return str: the EWKT representation of the Geometry
+        """
         return 'SRID=3857;POINT({long!s} {lat!s})'.format(
             long=long,
             lat=lat
@@ -24,8 +28,12 @@ class spatialRef(dbProxy):
 
     @classmethod
     def shape_geography(cls, long, lat, mode='POINT'):
-        """Return a EWKT string representing a point, to be passed to
-        `ST_GeogFromText` PostGIS function"""
+        """Return a EWKT string representing a point.
+
+        :param long:
+        :param lat:
+        :return str: the EWKT representation of the Geography
+        """
         return 'SRID=4326;{mode!s}({long!s} {lat!s})'.format(
             mode=mode,
             long=long,
@@ -34,11 +42,13 @@ class spatialRef(dbProxy):
 
     @classmethod
     def shape_aoi(cls, center):
-        """Build a square around a center point, to define a Area of Interest:
-        w: X - 0.5*width
-        e: X + 0.5*width
-        n: Y + 0.5*height
-        s: Y - 0.5*height
+        """Build a square around a center point, to define a Area of Interest.
+
+        Basic algorithm:
+            w: X - 0.5*width
+            e: X + 0.5*width
+            n: Y + 0.5*height
+            s: Y - 0.5*height
 
         Reminder:
            Geography(SRID=4326)
@@ -50,13 +60,12 @@ class spatialRef(dbProxy):
 
         :return tuple: polygon's EWKT and center's EWKT
         """
-        SIZE = 1.4  # polygon side = 1.4 degree
-        polygon = []
-        polygon.append([center[0] - 0.5*SIZE, center[1]])
-        polygon.append([center[0] + 0.5*SIZE, center[1]])
-        polygon.append([center[0], center[1] + 0.5*SIZE])
-        polygon.append([center[0], center[1] - 0.5*SIZE])
-        polygon.append([center[0] - 0.5*SIZE, center[1]])
+        _SIZE = 1.4  # polygon side = 1.4 degree
+
+        center_ = cls.unshape_geo_hash(center)
+        polygon = [[center_[0] - 0.5 * _SIZE, center_[1]], [center_[0] + 0.5 * _SIZE, center_[1]],
+                   [center_[0], center_[1] + 0.5 * _SIZE], [center_[0], center_[1] - 0.5 * _SIZE],
+                   [center_[0] - 0.5 * _SIZE, center_[1]]]
         string = str()
         for i, p in enumerate(polygon):
             string += str(p[0]) + ' ' + str(p[1])
@@ -67,7 +76,17 @@ class spatialRef(dbProxy):
             polygon=string
         )
 
-        return shape, cls.shape_geometry(center[0], center[1])
+        return shape, center
+
+    @classmethod
+    def aggregate_aoi_data_(cls, aoi):
+        """
+        From a polygon collect all the points in the `t_co2` table that lays inside it.
+        Serialize them into a GEOJSON and store them in the `json` column.
+        :param aoi:
+        :return:
+        """
+        pass
 
     @classmethod
     def unshape_geo_hash(cls, geohash, ):
@@ -84,9 +103,10 @@ class spatialRef(dbProxy):
             ST_X
             ST_Y
 
-        :param geohash: the value of a Geometry or Geography column
+        :param geohash: the value of a Geometry or Geography column or the EWKT
         :return tuple: (longitude, latitude, )
         """
+
         return cls._connected(
             "SELECT ST_X(%s), ST_Y(%s)",
             **{'values': (str(geohash), str(geohash), )}
@@ -99,10 +119,10 @@ class spatialRef(dbProxy):
 
         Example:
             >>> from sqlalchemy import func
-            >>> from src.dbops import dbOps
+            >>> from src.dbops import dataOps
             >>> query = select([Xco2.id, func.ST_AsGEOJSON(Xco2.coordinates)]).where(Xco2.id == 1)
             >>> print(str(query.compile()))
-            >>> spatialRef.exec_func_query(query)
+            >>> spatialOps.exec_func_query(query)
 
         :param str query: a custom query string or a SQLAlchemy construct (select())
         :param bool multi: set it to True if you expect multiple rows
