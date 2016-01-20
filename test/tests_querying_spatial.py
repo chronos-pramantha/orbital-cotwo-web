@@ -11,8 +11,9 @@ __author__ = 'Lorenzo'
 from files.loadfiles import return_files_paths, return_dataset
 
 from src.xco2 import Xco2, Areas
-from src.dbops import dbOps, start_postgre_engine
-from src.spatial import spatialRef
+from src.xco2ops import xco2Ops
+from src.dbproxy import dbProxy, start_postgre_engine
+from src.spatial import spatialOps
 from test.tests_storedata import util_populate_table, util_truncate_table
 
 TEST_LENGTH = 20
@@ -34,7 +35,7 @@ Test the Areas mapper to table t_areas.
 
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
-        cls.session = dbOps.create_session(cls.engine)
+        cls.session = dbProxy.create_session(cls.engine)
         # populate t_co2 with some data
         util_populate_table(cls.dataset, cls.test_length)
 
@@ -55,9 +56,10 @@ Test the Areas mapper to table t_areas.
     def util_populate_areas(self):
         pass
 
+    @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_should_test_shape_geometry(self):
         """Test shape_geometry() """
-        geom = spatialRef.shape_geometry(
+        geom = spatialOps.shape_geometry(
             self.luke.longitude,
             self.luke.latitude
         )
@@ -67,9 +69,10 @@ Test the Areas mapper to table t_areas.
             geom    # #todo: use a SELECT casting
         )
 
+    @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_should_test_shape_geography(self):
         """Test shape_geography() """
-        geog = spatialRef.shape_geography(
+        geog = spatialOps.shape_geography(
             self.luke.latitude,
             self.luke.longitude
         )
@@ -79,7 +82,7 @@ Test the Areas mapper to table t_areas.
             geog   # #todo: use a SELECT casting
         )
 
-    #@unittest.skipIf(REFACTOR, "REFACTORING")
+    @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_write_area(self):
         """Test object creation for Areas"""
         print('TEST1<<<<')
@@ -90,7 +93,7 @@ Test the Areas mapper to table t_areas.
     #@unittest.skipIf(REFACTOR, "REFACTORING")
     def test_shape_aoi(self):
         print('TEST2<<<<')
-        shape, center = spatialRef.shape_aoi((self.long, self.lat))
+        shape, center = spatialOps.shape_aoi((self.long, self.lat))
         print(shape)
         try:
             conversion = self.conn.execute(
@@ -103,9 +106,10 @@ Test the Areas mapper to table t_areas.
         # (-179.048 -22.1178405762), (-179.048 -23.5178405762), (-179.748110962 -22.8178), ))'::geometry;
         print('TEST PASSED\n')
 
+    @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_insert_area_and_center(self):
         """Test insertion of row in t_areas"""
-        shape, center = spatialRef.shape_aoi((self.long, self.lat))
+        shape, center = spatialOps.shape_aoi((self.long, self.lat))
         try:
             self.conn.execute(
                 'INSERT INTO t_areas(center, aoi) VALUES (\'{center}\', \'{polygon}\');'.format(

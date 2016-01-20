@@ -4,7 +4,7 @@ import unittest
 __author__ = 'Lorenzo'
 
 from src.xco2 import Xco2
-from src.dbops import start_postgre_engine
+from src.dbproxy import start_postgre_engine
 from files.loadfiles import return_files_paths, return_dataset
 from src.formatdata import createOCOpoint
 

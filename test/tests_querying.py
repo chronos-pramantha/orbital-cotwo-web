@@ -11,8 +11,9 @@ __author__ = 'Lorenzo'
 from files.loadfiles import return_files_paths, return_dataset
 
 from src.xco2 import Xco2
-from src.dbops import dbOps, start_postgre_engine
-from src.spatial import spatialRef
+from src.xco2ops import xco2Ops
+from src.dbproxy import dbProxy, start_postgre_engine
+from src.spatial import spatialOps
 from test.tests_storedata import util_populate_table, util_truncate_table
 
 TEST_LENGTH = 20
@@ -34,7 +35,7 @@ Test querying the Xco2 mapper and the t_co2 table.
 
     def setUp(self):
         self.test_length = TEST_LENGTH
-        self.session = dbOps.create_session(self.engine)
+        self.session = dbProxy.create_session(self.engine)
         # insert some rows
         util_populate_table(self.dataset, self.test_length)
         # pick a random sample
@@ -46,7 +47,7 @@ Test querying the Xco2 mapper and the t_co2 table.
         print('##### TEST1 #####')
         #print(lat, long)
 
-        r = dbOps.single_point_query(self.long, self.lat)
+        r = xco2Ops.single_point_query(self.long, self.lat)
         # print(query)
         #print(str(type(r)))
         try:
@@ -63,10 +64,10 @@ Test querying the Xco2 mapper and the t_co2 table.
     def test_unshape_geo_hash(self):
         """Test unshaping from PostGIS objects to EWKT"""
         print('##### TEST2 #####')
-        r = dbOps.single_point_query(self.long, self.lat)
+        r = xco2Ops.single_point_query(self.long, self.lat)
         #print(r.coordinates, r.pixels)
-        st1 = spatialRef.unshape_geo_hash(str(r.coordinates))
-        st2 = spatialRef.unshape_geo_hash(str(r.pixels))
+        st1 = spatialOps.unshape_geo_hash(str(r.coordinates))
+        st2 = spatialOps.unshape_geo_hash(str(r.pixels))
         try:
             self.assertEqual(st1, st2)
             print('PASSED')
@@ -77,10 +78,10 @@ Test querying the Xco2 mapper and the t_co2 table.
     def test_get_by_id(self):
         """Test get_by_id"""
         print('##### TEST3 #####')
-        r = dbOps.single_point_query(self.long, self.lat)
-        r = dbOps.get_by_id(r.id)
+        r = xco2Ops.single_point_query(self.long, self.lat)
+        r = dbProxy.get_by_id(r.id)
         # print(r)
-        st1 = spatialRef.unshape_geo_hash(r[3])
+        st1 = spatialOps.unshape_geo_hash(r[3])
         #print(st1)
         try:
             self.assertAlmostEqual(st1[0], self.long, delta=0.001)
@@ -96,7 +97,7 @@ Test querying the Xco2 mapper and the t_co2 table.
         import json
         table = Xco2
         # get a random row
-        id_ = dbOps.single_point_query(self.long, self.lat).id
+        id_ = xco2Ops.single_point_query(self.long, self.lat).id
         # build a query
         query = select(
             [table.id, func.ST_AsGEOJSON(table.coordinates)]
@@ -104,7 +105,7 @@ Test querying the Xco2 mapper and the t_co2 table.
         # print a compiled statement
         #print(str(query.compile()))
         # execute query
-        result = spatialRef.exec_func_query(query)
+        result = spatialOps.exec_func_query(query)
         # the query asked for a JSON
         result = json.loads(result[1])
         try:

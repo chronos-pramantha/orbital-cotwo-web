@@ -5,9 +5,10 @@ from sqlalchemy.exc import IntegrityError
 
 __author__ = 'Lorenzo'
 
-from src.xco2 import Xco2
-from src.dbops import dbOps, start_postgre_engine
-from src.spatial import spatialRef
+from src.xco2 import Xco2, Areas
+from src.dbproxy import dbProxy, start_postgre_engine
+from src.xco2ops import xco2Ops
+from src.spatial import spatialOps
 from files.loadfiles import return_files_paths, return_dataset
 from src.formatdata import create_generator_from_dataset
 
@@ -32,7 +33,7 @@ def util_populate_table(dataset, lentest):
     luke = create_generator_from_dataset(dataset, lentest)
 
     [
-        dbOps.store_xco2(
+        xco2Ops.store_xco2(
             Xco2(
                 xco2=d.xco2,
                 timestamp=d.timestamp,
@@ -70,7 +71,7 @@ Test storing operations on the database for t_co2 table
 
     def setUp(self):
         self.test_length = TEST_LENGTH
-        self.session = dbOps.create_session(self.engine)
+        self.session = dbProxy.create_session(db='test', engine=self.engine)
         util_populate_table(self.dataset, self.test_length)
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
@@ -114,7 +115,7 @@ Test storing operations on the database for t_co2 table
         luke = list(
             create_generator_from_dataset(self.dataset, 21)
         )[-1]
-        ins = dbOps.store_xco2(
+        ins = xco2Ops.store_xco2(
             Xco2(
                 xco2=luke.xco2,
                 timestamp=luke.timestamp,
@@ -133,10 +134,10 @@ Test storing operations on the database for t_co2 table
     def test_bulk_dump(self):
         """Test Xco2.bulk_dump()"""
         print('#### TEST5 ####')
-        session2 = dbOps.create_session(self.engine)
-        util_truncate_table(session2)
+        session2 = dbProxy.create_session(db='test', engine=self.engine)
+        util_truncate_table(session2, [Xco2, Areas])
 
-        dbOps.bulk_dump(
+        xco2Ops.bulk_dump(
             create_generator_from_dataset(self.dataset, 8)
         )
         rows = self.session.query(Xco2).count()
@@ -161,12 +162,12 @@ Test storing operations on the database for t_co2 table
         )
 
         try:
-            dbOps.store_xco2(
+            xco2Ops.store_xco2(
                 ins1
             )
             self.assertRaises(
                 IntegrityError,
-                dbOps.store_xco2,
+                xco2Ops.store_xco2,
                 ins2
             )
             print('TEST PASSED')
@@ -176,7 +177,7 @@ Test storing operations on the database for t_co2 table
     def tearDown(self):
         # if you want to keep the data in the db to make test using psql,
         # comment the line below
-        util_truncate_table(self.session)
+        util_truncate_table(self.session, [Xco2, Areas])
         del self.session
         pass
 
