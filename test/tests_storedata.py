@@ -22,7 +22,7 @@ Test storing operations on the database for t_co2 table
 (t_areas table's are in tests_querying_spatial).
 
 """
-    REFACTOR = True  # Flag to be set during refactoring for partial tests
+    REFACTOR = False  # Flag to be set during refactoring for partial tests
     TEST_LENGTH = 25  # Number of rows to insert in the test db
 
     @classmethod
@@ -38,7 +38,7 @@ Test storing operations on the database for t_co2 table
         self.session = dbProxy.create_session(db='test', engine=self.engine)
         self.samples = util_populate_table(self.dataset, self.test_length)
 
-    #@unittest.skipIf(REFACTOR, 'Refactoring')
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_if_tables_got_populated_correctly(self):
         """Test the data inserted in tables by util_populate_table"""
         # pick a set of rows in t_co2 as points

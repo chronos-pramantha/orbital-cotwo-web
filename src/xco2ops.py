@@ -38,7 +38,10 @@ class xco2Ops(dbProxy):
             coordinates=geography,
             pixels=geometry
         )
-        result = cls.alchemy.execute(ins)
+        try:
+            result = cls.alchemy.execute(ins)
+        except Exception as e:
+            raise e
         # #todo: create transaction to store also the t_areas.aoi
         # #todo: if point is not already in a stored aoi
         aoi = areasDbOps.get_aoi_that_contains_(geometry)
