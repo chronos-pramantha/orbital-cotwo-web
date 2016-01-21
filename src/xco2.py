@@ -49,7 +49,7 @@ class Xco2(Base):
         nullable=False
     )
     __table_args__ = (
-        UniqueConstraint('timestamp', 'coordinates', name='uix_time_coords'),
+        UniqueConstraint('coordinates', name='uix_t_co2_coords'),
     )
 
     #
@@ -62,6 +62,7 @@ class Xco2(Base):
         self.longitude = longitude
 
     # #todo: implement the reconstructor (from query object to py object)
+    # #todo: reconstructor can return namedtuple?
     @orm.reconstructor
     def init_on_load(self):
         from src.spatial import spatialOps
