@@ -1,7 +1,7 @@
 # coding=utf-8
 """
-Extends Areas to provide methods to apply the algorithm to properly
-populate the t_areas table.
+Thia modulw contains a class that is a wrapper around Database data
+ and a class that manage all the operations on the t_areas table.
 """
 from collections import namedtuple
 from sqlalchemy import select, func
@@ -122,13 +122,13 @@ class areasDbOps(dbProxy):
 
     @classmethod
     def update_aoi(cls, aoi, data):
+        """Prototype: should update AoI data without recreating the full json"""
         pk, aoi, center, _ = aoi
         upd = Areas.__table__.update().values(
             data=data
         ).where(Areas.id == pk)
         result = cls.alchemy.execute(upd)
         return areasAlgorithm((pk, aoi, center, data))
-
 
     @classmethod
     def serialize_geojson(cls, points_tuple):
