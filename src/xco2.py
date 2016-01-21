@@ -48,6 +48,9 @@ class Xco2(Base):
         Geometry('POINT', srid=3857, spatial_index=True),
         nullable=False
     )
+    # #todo: implemennt an 'archive' mechanism for newer relevations
+    # #todo: when this constraint is violated, record should be archived
+    # #todo: and the new record with the new relevation should be stored
     __table_args__ = (
         UniqueConstraint('coordinates', name='uix_t_co2_coords'),
     )
