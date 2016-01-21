@@ -60,10 +60,11 @@ class dbProxy:
         """
         conn = cls.connection()
         cur = conn.cursor()
-        cur.execute(
+        query = cur.mogrify(
             query,
             kwargs['values']
         ) if kwargs.get('values') else cur.execute(query)
+        cur.execute(query)
         result = cur.fetchone() if not kwargs.get('multi') else cur.fetchall()
         cur.close()
         conn.close()
@@ -113,10 +114,11 @@ class dbProxy:
         from src.xco2 import Xco2
         if not table:
             table = Xco2
+        name = table.__tablename__
         return cls._connected(
-            'SELECT * FROM %s WHERE id = %s;',
+            'SELECT * FROM ' + name + ' WHERE id = %s;',
             **{
-                'values': (table.__tablename__, row_id, ),
+                'values': (row_id, ),
                 'multi': None
             }
         )
