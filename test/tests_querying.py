@@ -3,20 +3,17 @@
 Test queries over the t_xco2 table
 """
 import unittest
-from random import randint
 from sqlalchemy import select, func
 
 __author__ = 'Lorenzo'
 
 from files.loadfiles import return_files_paths, return_dataset
 
-from src.xco2 import Xco2
+from src.xco2 import Xco2, Areas
 from src.xco2ops import xco2Ops
 from src.dbproxy import dbProxy, start_postgre_engine
 from src.spatial import spatialOps
-from test.tests_storedata import util_populate_table, util_truncate_table
-
-TEST_LENGTH = 20
+from test.utils_for_tests import util_populate_table, util_truncate_table, pick_random_sample
 
 
 class TestQuerying(unittest.TestCase):
@@ -24,50 +21,59 @@ class TestQuerying(unittest.TestCase):
 Test querying the Xco2 mapper and the t_co2 table.
 
 """
+    TEST_LENGTH = 20
+    REFACTOR = False
+
     @classmethod
     def setUpClass(cls):
         print(cls.__doc__)
         _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
-
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
 
     def setUp(self):
-        self.test_length = TEST_LENGTH
+        self.test_length = self.TEST_LENGTH
         self.session = dbProxy.create_session(self.engine)
-        # insert some rows
-        util_populate_table(self.dataset, self.test_length)
+        # insert some rows and return their pks
+        samples = util_populate_table(self.dataset, self.test_length)
         # pick a random sample
-        self.i = randint(0, 9)
-        self.lat, self.long = self.dataset['latitude'][self.i], self.dataset['longitude'][self.i]
+        self.i, self.test_point_pk, self.test_areas_pk, self.long, self.lat = pick_random_sample(
+            self.dataset,
+            samples
+        )
 
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_query_point_in_db(self):
-        """Store and retrieve a point using Geometry and Geography"""
+        """Retrieve a point using Geometry"""
         print('##### TEST1 #####')
-        #print(lat, long)
-
-        r = xco2Ops.single_point_query(self.long, self.lat)
-        # print(query)
-        #print(str(type(r)))
+        # find a point using geometry
+        geom = spatialOps.shape_geometry(self.long, self.lat)
+        r1 = select([Xco2.xco2]).where(Xco2.pixels == geom)
+        r1 = self.conn.execute(r1).first()
+        # find a point using primary key
+        r2 = select([Xco2.xco2]).where(Xco2.id == self.test_point_pk)
+        r2 = self.conn.execute(r2).first()
+        # test if record is the same
         try:
             self.assertAlmostEqual(
-                float(r.xco2),
-                self.dataset['xco2'][self.i],
-                delta=0.001
+                r1[0],
+                r2[0],
+                delta=0.00001
             )
             print('PASSED')
         except AssertionError as e:
             print('FAILED')
             raise e
 
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_unshape_geo_hash(self):
         """Test unshaping from PostGIS objects to EWKT"""
         print('##### TEST2 #####')
-        r = xco2Ops.single_point_query(self.long, self.lat)
-        #print(r.coordinates, r.pixels)
-        st1 = spatialOps.unshape_geo_hash(str(r.coordinates))
-        st2 = spatialOps.unshape_geo_hash(str(r.pixels))
+        r1 = select([Xco2]).where(Xco2.id == self.test_point_pk)
+        r = self.conn.execute(r1).first()
+        st1 = spatialOps.unshape_geo_hash(r[3])
+        st2 = spatialOps.unshape_geo_hash(r[4])
         try:
             self.assertEqual(st1, st2)
             print('PASSED')
@@ -75,11 +81,11 @@ Test querying the Xco2 mapper and the t_co2 table.
             print('FAILED')
             raise e
 
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_get_by_id(self):
         """Test get_by_id"""
         print('##### TEST3 #####')
-        r = xco2Ops.single_point_query(self.long, self.lat)
-        r = dbProxy.get_by_id(r.id)
+        r = dbProxy.get_by_id(self.test_point_pk)
         # print(r)
         st1 = spatialOps.unshape_geo_hash(r[3])
         #print(st1)
@@ -91,13 +97,15 @@ Test querying the Xco2 mapper and the t_co2 table.
             print('FAILED')
             raise e
 
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_ST_AsGEOJSON(self):
         """Test querying one point as a GEOJSON object"""
         print('##### TEST4 #####')
         import json
         table = Xco2
         # get a random row
-        id_ = xco2Ops.single_point_query(self.long, self.lat).id
+        r1 = select([Xco2]).where(Xco2.id == self.test_point_pk)
+        id_ = self.conn.execute(r1).first()[0]
         # build a query
         query = select(
             [table.id, func.ST_AsGEOJSON(table.coordinates)]
@@ -120,7 +128,7 @@ Test querying the Xco2 mapper and the t_co2 table.
 
 
     def tearDown(self):
-        util_truncate_table(self.session)
+        util_truncate_table(self.session, [Xco2, Areas])
         del self.session
         pass
 

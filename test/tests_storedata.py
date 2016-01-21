@@ -8,50 +8,12 @@ __author__ = 'Lorenzo'
 from src.xco2 import Xco2, Areas
 from src.dbproxy import dbProxy, start_postgre_engine
 from src.xco2ops import xco2Ops
-from src.spatial import spatialOps
-from files.loadfiles import return_files_paths, return_dataset
 from src.formatdata import create_generator_from_dataset
+from files.loadfiles import return_files_paths, return_dataset
+from test.utils_for_tests import util_populate_table, util_truncate_table
 
 
 # #todo: implement 'luke' as a Mock()
-
-REFACTOR = False  # Flag to be set during refactoring for partial tests
-TEST_LENGTH = 20  # Number of rows to insert in the test db
-
-
-# ##### UTILITIES FOR TESTS ##################################################
-def util_populate_table(dataset, lentest):
-    """
-    Populate the t_co2 table with n rows
-
-    :param numpyArray dataset:
-    :param int lentest:
-    :param Session session:
-    :return:
-    """
-    # create a generator from the first lentest records in the dataset
-    luke = create_generator_from_dataset(dataset, lentest)
-
-    [
-        xco2Ops.store_xco2(
-            Xco2(
-                xco2=d.xco2,
-                timestamp=d.timestamp,
-                latitude=d.latitude,
-                longitude=d.longitude
-            )
-        ) for d in luke
-    ]
-
-
-def util_truncate_table(session, table=[Xco2]):
-    """Utility to drop table's content"""
-    try:
-        [session.query(t).delete() for t in table]
-        session.commit()
-    except:
-        session.rollback()
-# ##### ############### ######################################################
 
 
 class DBtestStoring(unittest.TestCase):
@@ -60,19 +22,66 @@ Test storing operations on the database for t_co2 table
 (t_areas table's are in tests_querying_spatial).
 
 """
+    REFACTOR = True  # Flag to be set during refactoring for partial tests
+    TEST_LENGTH = 25  # Number of rows to insert in the test db
+
     @classmethod
     def setUpClass(cls):
         print(cls.__doc__)
         _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
-
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
 
     def setUp(self):
-        self.test_length = TEST_LENGTH
+        self.test_length = self.TEST_LENGTH
         self.session = dbProxy.create_session(db='test', engine=self.engine)
-        util_populate_table(self.dataset, self.test_length)
+        self.samples = util_populate_table(self.dataset, self.test_length)
+
+    #@unittest.skipIf(REFACTOR, 'Refactoring')
+    def test_if_tables_got_populated_correctly(self):
+        """Test the data inserted in tables by util_populate_table"""
+        # pick a set of rows in t_co2 as points
+        # try to find centers==points in t_areas
+        samples = tuple([s[0][0] for s in self.samples])
+        # try to find aoi that contains points
+        q2 = (
+            'SELECT t_areas.aoi, t_areas.data '
+            'FROM t_co2, t_areas WHERE '
+            '((t_co2.id IN %s) AND '
+            'ST_Contains(t_areas.aoi, t_co2.pixels));'
+        )
+        r = dbProxy._connected(
+            q2,
+            **{
+                'values': (samples, ),
+                'multi': True
+            }
+        )
+        #print(r)
+        # check if aoi.data contains centers
+        from src.spatial import spatialOps
+        outcome = []
+        for result in r:
+            coords = [tuple(cc['geometry']['coordinates']) for cc in result[1]['features']]
+            aoi = result[0]
+            for c in coords:
+                geom = spatialOps.shape_geometry(c[0], c[1])
+                q3 = (
+                    'SELECT ST_Contains(%s, %s::geometry);'
+                )
+                contains = dbProxy._connected(
+                    q3,
+                    **{
+                        'values': (aoi, geom, ),
+                        'multi': False
+                    }
+                )
+                outcome.append(contains[0])
+        print(outcome)
+        #assert all(outcome[0:-2]) == True
+
+
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_the_records_in_the_db(self):
@@ -82,7 +91,6 @@ Test storing operations on the database for t_co2 table
         try:
             self.assertEqual(rows, self.test_length)
             print('TEST PASSED')
-            #print(rows)
         except AssertionError:
             print('TEST FAILED')
 
@@ -99,8 +107,6 @@ Test storing operations on the database for t_co2 table
         ten = self.session.query(Xco2).limit(10)
         lst = list(create_generator_from_dataset(self.dataset, 10))
         for i, l in enumerate(lst):
-            #print(str(type(ten[i].xco2)), ten[i].xco2)
-            #print(str(type(l.xco2)), l.xco2)
             try:
                 self.assertAlmostEqual(l.xco2, float(ten[i].xco2), delta=0.0000001)
                 self.assertEqual(l.timestamp, ten[i].timestamp)

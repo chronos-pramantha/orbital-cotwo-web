@@ -14,7 +14,7 @@ from src.xco2 import Xco2, Areas
 from src.xco2ops import xco2Ops
 from src.dbproxy import dbProxy, start_postgre_engine
 from src.spatial import spatialOps
-from test.tests_storedata import util_populate_table, util_truncate_table
+from test.utils_for_tests import util_populate_table, util_truncate_table, pick_random_sample
 
 TEST_LENGTH = 20
 
@@ -24,7 +24,7 @@ class DBareasSpatial(unittest.TestCase):
 Test the Areas mapper to table t_areas.
 
 """
-    REFACTOR = True
+    REFACTOR = False
     test_length = TEST_LENGTH
 
     @classmethod
@@ -36,20 +36,21 @@ Test the Areas mapper to table t_areas.
         cls.paths = return_files_paths()
         cls.dataset = return_dataset(cls.paths[0])
         cls.session = dbProxy.create_session(cls.engine)
-        # populate t_co2 with some data
-        util_populate_table(cls.dataset, cls.test_length)
 
     def setUp(self):
-        self.util_populate_areas()
+        # insert some rows and return their pks
+        samples = util_populate_table(self.dataset, self.test_length)
         # pick a random sample
-        self.i = i = randint(0, 9)
-        self.lat, self.long = self.dataset['latitude'][i], self.dataset['longitude'][i]
+        self.i, self.test_point_pk, self.test_areas_pk, self.long, self.lat = pick_random_sample(
+            self.dataset,
+            samples
+        )
         from src.formatdata import createOCOpoint
         self.luke = createOCOpoint(**{
-            'latitude': self.dataset['latitude'][i],
-            'longitude': self.dataset['longitude'][i],
-            'xco2': self.dataset['xco2'][i],
-            'date': self.dataset['date'][i],
+            'latitude': self.dataset['latitude'][self.i],
+            'longitude': self.dataset['longitude'][self.i],
+            'xco2': self.dataset['xco2'][self.i],
+            'date': self.dataset['date'][self.i],
             }
         )
 
@@ -83,17 +84,10 @@ Test the Areas mapper to table t_areas.
         )
 
     @unittest.skipIf(REFACTOR, "REFACTORING")
-    def test_write_area(self):
-        """Test object creation for Areas"""
-        print('TEST1<<<<')
-        new = Areas(self.long, self.lat)
-        print(str(new))
-        print('TEST PASSED\n')
-
-    #@unittest.skipIf(REFACTOR, "REFACTORING")
     def test_shape_aoi(self):
         print('TEST2<<<<')
-        shape, center = spatialOps.shape_aoi((self.long, self.lat))
+        geom = spatialOps.shape_geometry(self.long, self.lat)
+        shape, center = spatialOps.shape_aoi(geom)
         print(shape)
         try:
             conversion = self.conn.execute(
@@ -109,7 +103,8 @@ Test the Areas mapper to table t_areas.
     @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_insert_area_and_center(self):
         """Test insertion of row in t_areas"""
-        shape, center = spatialOps.shape_aoi((self.long, self.lat))
+        geom = spatialOps.shape_geometry(self.long, self.lat)
+        shape, center = spatialOps.shape_aoi(geom)
         try:
             self.conn.execute(
                 'INSERT INTO t_areas(center, aoi) VALUES (\'{center}\', \'{polygon}\');'.format(
@@ -132,12 +127,11 @@ Test the Areas mapper to table t_areas.
         print('TEST PASSED\n')
 
     def tearDown(self):
-        util_truncate_table(self.session, table=[Areas])
+        util_truncate_table(self.session, table=[Xco2, Areas])
         pass
 
     @classmethod
     def tearDownClass(cls):
-        util_truncate_table(cls.session, table=[Xco2])
         cls.session.close()
         cls.conn.close()
         del cls
