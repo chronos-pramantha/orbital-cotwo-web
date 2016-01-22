@@ -69,6 +69,7 @@ def bulk_dump(objs_generator):
 
     :param iter objs_generator:
     """
+    i = 0
     while True:
         try:
             obj = next(objs_generator)
@@ -79,8 +80,9 @@ def bulk_dump(objs_generator):
                 longitude=obj.longitude
             )
             new.store_xco2()
+            i += 1
         except StopIteration:
-            return
+            return True, i
         except Exception as e:
             raise e
 

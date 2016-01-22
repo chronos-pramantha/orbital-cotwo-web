@@ -75,9 +75,9 @@ class Xco2(Base):
 
         :return tuple: (pkey_xco2, pkey_area, )
         """
-        from src.spatial import spatialOps
+        from src.spatial import spatial
         from src.dbproxy import dbProxy
-        geometry = spatialOps.shape_geometry(self.longitude, self.latitude)
+        geometry = spatial.shape_geometry(self.longitude, self.latitude)
         ins = Xco2.__table__.insert().values(
             xco2=self.xco2,
             timestamp=self.timestamp,

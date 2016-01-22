@@ -4,11 +4,10 @@ from sqlalchemy import func, select
 
 __author__ = 'Lorenzo'
 
-from src.xco2 import Xco2, Areas
 from src.dbproxy import dbProxy
 
 
-class spatialOps(dbProxy):
+class spatial(dbProxy):
     """
     Handle spatial read operations on the database.
 
@@ -115,25 +114,6 @@ class spatialOps(dbProxy):
             "SELECT ST_X(%s), ST_Y(%s)",
             **{'values': (str(geohash), str(geohash), )}
         )
-
-    @classmethod
-    def exec_func_query(cls, query, multi=False):
-        """
-        Run a PostGIS query using SQLAlchemy cursor.
-
-        Example:
-            >>> from sqlalchemy import func
-            >>> from src.dbops import dataOps
-            >>> query = select([Xco2.id, func.ST_AsGEOJSON(Xco2.coordinates)]).where(Xco2.id == 1)
-            >>> print(str(query.compile()))
-            >>> spatialOps.exec_func_query(query)
-
-        :param str query: a custom query string or a SQLAlchemy construct (select())
-        :param bool multi: set it to True if you expect multiple rows
-        :return tuple: data contained in required columns
-        """
-        proxy = cls.alchemy.execute(query)
-        return proxy.first() if not multi else proxy.fetchall()
 
 
 __all__ = ['shape_geometry',

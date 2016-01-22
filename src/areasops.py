@@ -10,7 +10,7 @@ __author__ = 'Lorenzo'
 
 from src.xco2 import Areas, Xco2
 from src.dbproxy import dbProxy
-from src.spatial import spatialOps
+from src.spatial import spatial
 
 
 class areasAlgorithm:
@@ -27,7 +27,7 @@ class areasAlgorithm:
 
     Hold the data and apply all the needed calculation for a complex database operation.
 
-    It leverages the methods in the dataOps, spatialOps and areaOps classes.
+    It leverages the methods in the dataOps, spatial and areaOps classes.
     """
     def __init__(self, area):
         self.pk = area[0]
@@ -110,7 +110,7 @@ class areasOps(dbProxy):
         :param str center: a EWKT string of a point
         :return object: areasAlgorithm object
         """
-        area, center = spatialOps.shape_aoi(center)
+        area, center = spatial.shape_aoi(center)
         points = cls.find_all_points_in_(area)
         geojson = cls.serialize_geojson(
             points
@@ -159,7 +159,7 @@ class areasOps(dbProxy):
             "features": []
         }
         for p in points_tuple:
-            x, y = spatialOps.unshape_geo_hash(p[3])
+            x, y = spatial.unshape_geo_hash(p[3])
             xco2 = p[1]
             # store initialized geojson with center
             # as the only feature-point
@@ -184,7 +184,7 @@ class areasOps(dbProxy):
         :param point: a center point of a AoI
         :return: a GeoJSON containing only the center point
         """
-        x, y = spatialOps.unshape_geo_hash(point)
+        x, y = spatial.unshape_geo_hash(point)
         xco2 = cls._connected(
             'SELECT xco2 from t_co2 WHERE pixels = %s',
             **{
@@ -220,3 +220,22 @@ class areasOps(dbProxy):
             (area, )
         ).fetchall()
         return result
+
+    @classmethod
+    def exec_func_query(cls, query, multi=False):
+        """
+        Run a PostGIS query using SQLAlchemy cursor.
+
+        Example:
+            >>> from sqlalchemy import func
+            >>> from src.dbops import dataOps
+            >>> query = select([Xco2.id, func.ST_AsGEOJSON(Xco2.coordinates)]).where(Xco2.id == 1)
+            >>> print(str(query.compile()))
+            >>> spatial.exec_func_query(query)
+
+        :param str query: a custom query string or a SQLAlchemy construct (select())
+        :param bool multi: set it to True if you expect multiple rows
+        :return tuple: data contained in required columns
+        """
+        proxy = cls.alchemy.execute(query)
+        return proxy.first() if not multi else proxy.fetchall()
