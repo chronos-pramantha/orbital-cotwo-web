@@ -21,3 +21,4 @@
 -- 1b use a UNIQUE constraint on (lat, long, timestamp) [DONE] [DEPRECATED]
 3 API: add timestamp selection for the client (last 6 months, 6to12 months, 12to18 months,...)
 6 Implement Tornado
+7 switch to Postgres 9.5 (for JSON binary operations)

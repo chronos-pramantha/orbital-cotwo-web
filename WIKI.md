@@ -20,6 +20,8 @@ Choosing a [map projection (1)](https://source.opennews.org/en-US/learning/choos
 
 EPSG [3857](http://wiki.openstreetmap.org/wiki/EPSG:3857) and popular [Web maps providers](http://gis.stackexchange.com/questions/48949/epsg-3857-or-4326-for-googlemaps-openstreetmap-and-leaflet).
 
+Some nice articles: [one](http://workshops.boundlessgeo.com/postgis-intro/geography.html#casting-to-geometry) and [two](https://www.dataiku.com/learn/guide/other/geo/convert-coordinates-with-PostGIS.html)
+
 
 #### Some queries working on our test database
 
