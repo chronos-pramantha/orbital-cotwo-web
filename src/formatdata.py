@@ -81,6 +81,8 @@ def bulk_dump(objs_generator):
             )
             new.store_xco2()
             i += 1
+            if i % 5000 == 0:
+                print('Still going... Wait with patience...')
         except StopIteration:
             return True, i
         except Exception as e:

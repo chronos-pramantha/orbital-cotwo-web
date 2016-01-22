@@ -6,7 +6,7 @@ directory
 
 __author__ = 'Lorenzo'
 
-from src.xco2 import Xco2
+from random import randint
 from files.loadfiles import return_dataset, return_files_paths
 from src.formatdata import create_generator_from_dataset
 
@@ -16,8 +16,9 @@ def main(full=False):
     print(paths, len(paths))
     # check the full flag
     if not full:
-        # try the first thousand rows of the first file
-        dataset = [return_dataset(paths[1])]
+        l = randint(0, len(paths) - 1)
+        # try the first thousand rows of one random file
+        dataset = [return_dataset(paths[l])]
         luke = (create_generator_from_dataset(d, 1000) for d in dataset)
     else:
         # dump all the files
@@ -27,21 +28,21 @@ def main(full=False):
     #print(luke, )
 
     # Luke is a >> generator of generators <<
+    # Feel the Force
     print('DUMPING...')
     from src.formatdata import bulk_dump
     i = 0
     while True:
         try:
-            bulk_dump(next(luke))
+            _, n = bulk_dump(next(luke))
+            i += n
         except StopIteration:
             print('>>> {} Xco2 data dumped <<<'.format(i))
             break
         except KeyboardInterrupt:
             break
-        if i % 1000 == 0:
-            print(i)
 
 
 if __name__ == '__main__':
     # set full=True if you want to dump all the downloaded files
-    main(full=False)
+    main(full=True)

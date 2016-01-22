@@ -13,30 +13,58 @@ from src.dbproxy import dbProxy
 from src.spatial import spatial
 
 
-class areasAlgorithm:
+class Controller:
     """
-    Processing Model. Business Layer.
+    Processing Model. Business Layer. Business Logic.
 
-    When a client requests a center `(x, y)`, the lookup table can find the square
-    containing that point and respond with the JSON. (If a point is not in any square,
-    the algorithm looks on the areas of the closest (in a 200 Km radius) centers to
-    the point, or generate a new area with this point as a center).
-
-    The outcome is a big array of point that has to be turned into a set of tuples (probably
-    around 1500 elements), then serialized into a GEOJSON and stored in the proper column.
-
-    Hold the data and apply all the needed calculation for a complex database operation.
-
-    It leverages the methods in the dataOps, spatial and areaOps classes.
+    Take a POINT or a POLYGON EWKT and perform the magic.
+    It get created at each request to handle the procedure of
+    aggregating and returnig Xco2 to the client.
     """
-    def __init__(self, area):
-        self.pk = area[0]
-        self.aoi = area[1]
-        self.center = area[2]
-        self.data = area[3]
+    elements = ('POINT', 'POLYGON', )
+
+    def __init__(self, geometry):
+        if any(geometry.find(e) != -1 for e in self.elements):
+            self.element = [e for e in self.elements if geometry.find(e) != -1][0]
+        else:
+            raise ValueError('Controller: geometry has to be '
+                             'a EWKT POINT or POLYGON')
+        self.geometry = geometry
 
     @property
-    def is_point_in_any_area(self):
+    def is_view(self):
+        """
+        Check if a polygon is a single AoI or a multiple AoI (View).
+        If the Controller is a point is False.
+        :return bool:
+        """
+        return False
+
+    @property
+    def pk(self):
+        """
+        Return the primary key of the Controller's geometry if exist,
+        else fallback in look_for_closest_point()
+        :return int: pk
+        """
+        # if it's a point, check t_areas.center and t_co2.geometry
+        # if it's a polygon, check t_areas.aoi
+        # else is a View, create a View (a collection of AoI in the same map view) object
+        return 1
+
+    @property
+    def center(self):
+        """
+        Return the point itself or the center of the polygon.
+        :return:
+        """
+        # if it's a point, return the point
+        # if it's a polygon, calculate and return the center of the polygon
+        # else is a View, create a View (a collection of AoI in the same map view) object
+        return 1
+
+    @classmethod
+    def is_point_in_any_area(cls, point):
         """
         Find the area the geometry belong to, if nay in the database.
 
@@ -44,30 +72,41 @@ class areasAlgorithm:
 
         :return tuple: (False, None) or (True, (object_tuple,))
         """
-        return areasOps.get_aoi_that_contains_(
-            self.aoi
-        )
+        query = select([Areas]).where(func.ST_Contains(Areas.aoi, point))
+        print(str(query.compile()))
+        result = areasOps.exec_func_query(query, multi=False)
+        if not result:
+            return False, None
+        return True, result
 
-    @property
-    def center_of_the_area(self):
-        return self.center
-
-
-    def what_are_the_closest_centers_to_(self, point):
+    @classmethod
+    def what_are_the_closest_centers_to_(cls, point):
         """
-        Returns the closest area's centers from a point.
-        :param point:
-        :return: array of points in the t_areas table
-        """
-        pass
-
-    def which_areas_contains_this_(self, points):
-        """
-        Return the areas
-        :param point:
-        :return: arrays of areas in the t_areas table
+        Returns the 3 closest area's centers from a point.
+        :param point: a EWKT geometry
+        :return list: of 3 centers in the t_areas table
         """
         pass
+
+    def which_areas_contains_this_polygon(self):
+        """
+        Return the list of areas contained by the controller's polygon
+        :return generator: ResultProxy
+        """
+        query = select([Areas]).where(func.ST_Contains(self.polygon, Areas.aoi))
+        print(str(query.compile()))
+        results = areasOps.exec_func_query(query, multi=True)
+        return results
+
+    def which_points_contains_this_area(self):
+        """
+        Return the list of points contained by this area
+        :return generator: ResultProxy
+        """
+        query = select([Xco2]).where(func.ST_Contains(self.polygon, Xco2.geometry))
+        print(str(query.compile()))
+        results = areasOps.exec_func_query(query, multi=True)
+        return results
 
 
 class areasOps(dbProxy):
@@ -91,8 +130,10 @@ class areasOps(dbProxy):
         :return:
         """
         aoi = namedtuple('area', ['check', 'row'])
+        # return the row with added the EWKT representation of the AoI
         result = cls.alchemy.execute(
-            'SELECT * FROM t_areas WHERE ST_contains(t_areas.aoi, %s);',
+            'SELECT id, aoi, center, data, ST_AsEWKT(aoi) '
+            'FROM t_areas WHERE ST_contains(t_areas.aoi, %s);',
             (geometry, )
         ).first()
         if result:
@@ -108,7 +149,7 @@ class areasOps(dbProxy):
         with center equal to this center.
 
         :param str center: a EWKT string of a point
-        :return object: areasAlgorithm object
+        :return object: Controller object
         """
         area, center = spatial.shape_aoi(center)
         points = cls.find_all_points_in_(area)
@@ -120,14 +161,14 @@ class areasOps(dbProxy):
             center=center,
             data=geojson
         )
-        result = cls.alchemy.execute(ins)
-        return areasAlgorithm((result.inserted_primary_key[0], area, center, geojson))
+        cls.alchemy.execute(ins)
+        return Controller(area)
 
     @classmethod
     def update_aoi_geojson(cls, geometry, aoi, xco2):
         """Prototype: should update AoI data without recreating the full json"""
         # unpack row
-        pk, aoi, center, data = aoi
+        pk, aoi, center, data, ewkt = aoi
         # get [x, y] from EWKT
         point = [float(g) for g in geometry[16:-1].split(' ')]
         # append to JSON
@@ -145,7 +186,7 @@ class areasOps(dbProxy):
             data=data
         ).where(Areas.id == pk)
         cls.alchemy.execute(upd)
-        return areasAlgorithm((pk, aoi, center, data))
+        return Controller(ewkt)
 
     @classmethod
     def serialize_geojson(cls, points_tuple):
@@ -211,7 +252,7 @@ class areasOps(dbProxy):
         """
         Query executor: fetch all the points in t_co2 contained by a given area.
 
-        :param areasAlgorithm area: an areasAlgorithm object
+        :param str area: an Controller object
         :return tuple: database results
         """
         # find all points in Xco2 that belong to area
@@ -228,10 +269,9 @@ class areasOps(dbProxy):
 
         Example:
             >>> from sqlalchemy import func
-            >>> from src.dbops import dataOps
             >>> query = select([Xco2.id, func.ST_AsGEOJSON(Xco2.coordinates)]).where(Xco2.id == 1)
             >>> print(str(query.compile()))
-            >>> spatial.exec_func_query(query)
+            >>> self.exec_func_query(query)
 
         :param str query: a custom query string or a SQLAlchemy construct (select())
         :param bool multi: set it to True if you expect multiple rows

@@ -63,6 +63,11 @@ class Xco2(Base):
         """
         Main function to the database when storing Xco2 data.
 
+        When a client requests a center `(x, y)`, the lookup table can find the square
+        containing that point and respond with the JSON. (If a point is not in any square,
+        the algorithm looks on the areas of the closest (in a 200 Km radius) centers, or
+        finally generates a new area with this point as a center).
+
         INSERT procedure is as follow:
             - insert point > belong the point to any known area?
             - if Y > INSERT point
@@ -94,10 +99,10 @@ class Xco2(Base):
             # in the latter case, just pass
             # #### raise e
             # at the moment pass
-            pass
+            print(str(e))
             return None, None
 
-        return result.inserted_primary_key, aoi.pk
+        return result.inserted_primary_key[0], aoi.pk
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(
@@ -161,9 +166,9 @@ class Areas(Base):
     )
 
     def __init__(self, center):
-        from src.spatial import spatialOps
+        from src.spatial import spatial
         self.center = center
-        self.aoi = spatialOps.shape_aoi(self.center)
+        self.aoi = spatial.shape_aoi(self.center)
         self.data = None
 
     def __repr__(self):
@@ -185,7 +190,7 @@ class Areas(Base):
 
         :param str geometry: a EWKT string for a geometry
         :param float xco2: a float for xco2 datum
-        :return areasAlgorithm:
+        :return Controller:
         """
         from src.areasops import areasOps
         aoi = areasOps.get_aoi_that_contains_(geometry)
