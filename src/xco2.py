@@ -36,15 +36,9 @@ class Xco2(Base):
     id = Column('id', Integer, primary_key=True)
     xco2 = Column('xco2', DOUBLE_PRECISION(precision=11), nullable=False)
     timestamp = Column('timestamp', DateTime, nullable=False)
-    # use a geography with coordinates
-    coordinates = Column(
-        'coordinates',
-        Geography('POINT', srid=4326, spatial_index=True),
-        nullable=False
-    )
     # use a geometry with pixels (for Web maps)
-    pixels = Column(
-        'pixels',
+    geometry = Column(
+        'geometry',
         Geometry('POINT', srid=3857, spatial_index=True),
         nullable=False
     )
@@ -52,7 +46,7 @@ class Xco2(Base):
     # #todo: when this constraint is violated, record should be archived
     # #todo: and the new record with the new relevation should be stored
     __table_args__ = (
-        UniqueConstraint('coordinates', name='uix_t_co2_coords'),
+        UniqueConstraint('timestamp', 'geometry', name='uix_t_co2_timestp_coords'),
     )
 
     #
@@ -69,13 +63,13 @@ class Xco2(Base):
     @orm.reconstructor
     def init_on_load(self):
         from src.spatial import spatialOps
-        unshape = spatialOps.unshape_geo_hash(str(self.coordinates))
+        unshape = spatialOps.unshape_geo_hash(str(self.geometry))
         self.latitude = unshape[1]
         self.longitude = unshape[0]
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(
-            coordinates=repr(self.coordinates)
+            coordinates=repr(self.geometry)
         )
 
     def __str__(self):

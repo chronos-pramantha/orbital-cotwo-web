@@ -44,11 +44,11 @@ class spatialOps(dbProxy):
     def shape_aoi(cls, center):
         """Build a square around a center point, to define a Area of Interest.
 
-        Basic algorithm:
-            w: X - 0.5*width
-            e: X + 0.5*width
-            n: Y + 0.5*height
-            s: Y - 0.5*height
+        Basic algorithm to build a square:
+            nw: X - 0.5*width, Y + 0.5*height
+            ne: X + 0.5*width, Y + 0.5*height
+            se: Y + 0.5*height, Y - 0.5*height
+            sw: Y - 0.5*height, Y - 0.5*height
 
         Reminder:
            Geography(SRID=4326)
@@ -63,9 +63,11 @@ class spatialOps(dbProxy):
         _SIZE = 1.4  # polygon side = 1.4 degree
 
         center_ = cls.unshape_geo_hash(center)
-        polygon = [[center_[0] - 0.5 * _SIZE, center_[1]], [center_[0] + 0.5 * _SIZE, center_[1]],
-                   [center_[0], center_[1] + 0.5 * _SIZE], [center_[0], center_[1] - 0.5 * _SIZE],
-                   [center_[0] - 0.5 * _SIZE, center_[1]]]
+        polygon = [[center_[0] - 0.5 * _SIZE, center_[1] + 0.5 * _SIZE],
+                   [center_[0] + 0.5 * _SIZE, center_[1] + 0.5 * _SIZE],
+                   [center_[0] + 0.5 * _SIZE, center_[1] - 0.5 * _SIZE],
+                   [center_[0] - 0.5 * _SIZE, center_[1] - 0.5 * _SIZE],
+                   [center_[0] - 0.5 * _SIZE, center_[1] + 0.5 * _SIZE]]
         string = str()
         for i, p in enumerate(polygon):
             string += str(p[0]) + ' ' + str(p[1])

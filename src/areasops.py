@@ -76,9 +76,31 @@ class areasDbOps(dbProxy):
 
     """
     @classmethod
+    def store_area(cls, geometry, xco2):
+        """
+        Given a geometry of a stored point, it adds this point to an existing Area
+        of Interest or stores a new AoI with center the given geoemtry.
+
+        :param str geometry: a EWKT string for a geometry
+        :return:
+        """
+        aoi = cls.get_aoi_that_contains_(geometry)
+        if aoi.check is True:
+            # add the point to the existing aoi
+            aoi = cls.update_aoi_geojson(geometry, aoi.row, xco2)
+        elif aoi.check is False:
+            # create aoi with center geometry and new geojson, return it
+            aoi = cls.store_new_aoi(geometry)
+        else:
+            raise ValueError('get_aoi_that_contains_(geometry) returned a wrong value '
+                             'for key \'check\'. It can be only True or False')
+
+        return aoi
+
+    @classmethod
     def get_aoi_that_contains_(cls, geometry):
         """
-        Check if SELECT * FROM t_areas WHERE ST_contains(geometry); is not empty
+        Check if SELECT * FROM t_areas WHERE ST_contains(area, geometry); is not empty
 
         :param str geometry: the EWKT representation of the geometry
         :return tuple: (bool, (result_object),)
@@ -121,13 +143,27 @@ class areasDbOps(dbProxy):
         return areasAlgorithm((result.inserted_primary_key[0], area, center, geojson))
 
     @classmethod
-    def update_aoi(cls, aoi, data):
+    def update_aoi_geojson(cls, geometry, aoi, xco2):
         """Prototype: should update AoI data without recreating the full json"""
-        pk, aoi, center, _ = aoi
+        # unpack row
+        pk, aoi, center, data = aoi
+        # get [x, y] from EWKT
+        point = [float(g) for g in geometry[16:-1].split(' ')]
+        # append to JSON
+        data['features'].append({
+              "type": "Feature",
+              "geometry": {
+                "type": "Point",
+                "coordinates": point
+              },
+              "properties": {
+                "xco2": xco2
+              }
+            })
         upd = Areas.__table__.update().values(
             data=data
         ).where(Areas.id == pk)
-        result = cls.alchemy.execute(upd)
+        cls.alchemy.execute(upd)
         return areasAlgorithm((pk, aoi, center, data))
 
     @classmethod
@@ -139,12 +175,10 @@ class areasDbOps(dbProxy):
         :return: a GeoJSON with the co2 data for the points
         """
         geojson = {
-            "dataset": "NASA's OCO2 data",
-            "projection": "3857",
             "features": []
         }
         for p in points_tuple:
-            x, y = spatialOps.unshape_geo_hash(p[4])
+            x, y = spatialOps.unshape_geo_hash(p[3])
             xco2 = p[1]
             # store initialized geojson with center
             # as the only feature-point
@@ -179,8 +213,6 @@ class areasDbOps(dbProxy):
         # store initialized geojson with center
         # as the only feature-point
         return {
-            "dataset": "NASA's OCO2 data",
-            "projection": "3857",
             "features": [{
               "type": "Feature",
               "geometry": {
@@ -203,7 +235,7 @@ class areasDbOps(dbProxy):
         """
         # find all points in Xco2 that belong to area
         result = cls.alchemy.execute(
-            'SELECT * FROM t_co2 WHERE ST_contains(%s, t_co2.pixels);',
+            'SELECT * FROM t_co2 WHERE ST_contains(%s, t_co2.geometry);',
             (area, )
         ).fetchall()
         return result

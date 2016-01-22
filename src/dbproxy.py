@@ -96,11 +96,19 @@ class dbProxy:
     @classmethod
     def create_tables_in_databases(cls, base):
         """Create a Schema to store CO2 data in the official and test databases"""
-
-        [base.metadata.create_all(
-            start_postgre_engine(db)[1],
-            checkfirst=True
-        ) for db in DATABASES]
+        from src.xco2 import Areas
+        from sqlalchemy import func
+        for db in DATABASES:
+            engine = start_postgre_engine(db)
+            base.metadata.create_all(
+                engine[1],
+                checkfirst=True
+            )
+            with psycopg2.connect('postgresql://{}:{}@localhost/{}'.format(
+                    USER, PWD, db
+                )
+            ) as conn:
+                conn.cursor().execute('UPDATE t_areas SET aoi = ST_SnapToGrid(aoi, 1.4);')
 
     @classmethod
     def get_by_id(cls, row_id,  table=None):

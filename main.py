@@ -28,18 +28,17 @@ def main(full=False):
 
     # consume the generator of generators
     # change database name below ('test' or 'gis') to decide which one to use
-    from src.dbproxy import ENGINE
     print('DUMPING...')
     i = 0
-    with ENGINE.connect() as conn:
-        while True:
-            try:
-                xco2Ops.bulk_dump(next(luke))
-                i += 1
-            except StopIteration:
-                return True
-            if i % 1000 == 0:
-                print(i)
+
+    while True:
+        try:
+            xco2Ops.bulk_dump(next(luke))
+            i += 1
+        except StopIteration:
+            print('>>> XCO2 Dump finished <<<')
+        if i % 1000 == 0:
+            print(i)
 
 
 if __name__ == '__main__':

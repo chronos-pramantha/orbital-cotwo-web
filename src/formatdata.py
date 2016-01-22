@@ -5,6 +5,7 @@ Retrieve data from netCDF4 files and store it into objects
 """
 from collections import namedtuple
 from datetime import datetime
+from random import shuffle
 
 __author__ = 'Lorenzo'
 
@@ -46,13 +47,16 @@ def create_generator_from_dataset(ds, rng=None):
     :return: generator with range(rng) elements
     """
     rng = len(ds['latitude']) if not rng else rng
+    positional = [i for i in range(rng)]
+    shuffle(positional)
+
     return (
         createOCOpoint(**{
             'latitude': round(ds['latitude'][i], 6),
             'longitude': round(ds['longitude'][i], 6),
             'xco2': ds['xco2'][i],
             'date': ds['date'][i],
-        }) for i in range(rng))
+        }) for i in positional)
 
     # #todo: better expressed with 'yield' ?
 
