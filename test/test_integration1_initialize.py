@@ -14,6 +14,9 @@ from datetime import datetime
 __author__ = 'Lorenzo'
 
 from test.utils_for_tests import rand_coordinates, rand_data
+from src.xco2 import Xco2
+from src.dbproxy import dbProxy
+
 
 TESTLENGTH = 1000  # set a number of iteration
 
@@ -25,10 +28,9 @@ TEST2 = (1000, True)  # long test - random points from small portion of surface 
 TEST3 = (10000, False) # long test - random points from all the cartesian plane
 
 
-def test_should_store_a_new_area(rng, square):
+def test_should_store_new_points_and_areas(rng, square):
     """Test insertion of a area alongside with a xco2 data"""
-    from src.xco2ops import xco2Ops
-    from src.xco2 import Xco2
+    print('TEST1: INSERTION PROCEDURE\n')
     for _ in range(rng):
         # use squared params to limit to a limited portion
         longitude, latitude = rand_coordinates(squared=square)
@@ -38,16 +40,35 @@ def test_should_store_a_new_area(rng, square):
             latitude=latitude,
             timestamp=datetime(1970, 1, 1)
         )
-        xco2Ops.store_xco2(xco2)
-    ########
-    # RESULTS
-    # After running this function (also multiple times) try the
-    # following queries on the database:
-    ########
-    # SELECT t_co2.id, ST_X(pixels) as long, ST_Y(pixels) as lat, t_areas.data as geojson FROM t_co2, t_areas LIMIT 1;
-    # SELECT ST_AsText(pixels), t_areas.data FROM t_co2, t_areas LIMIT 1;
+        xco2.store_xco2()
+    print('Done\n')
+    print(
+        '###########'
+        '# RESULTS\n\n'
+        '# Try the following queries on the database:\n'
+        '#####\n'
+        'SELECT t_co2.id, ST_X(geometry) as long, ST_Y(geometry) as lat, t_areas.data as geojson FROM t_co2, t_areas LIMIT 1;\n'
+        'SELECT ST_AsText(pixels), t_areas.data FROM t_co2, t_areas LIMIT 1;\n'
+        '# each area contains the GeoJSON in the \'data\' field\n'
+        'SELECT id, center from t_areas;\n'
+        '# compare the number of insertions with the number of areas (should be around 10%)\n'
+        'SELECT count(*) from t_co2;\n'
+        'SELECT count(*) from t_areas;)\n'
+        '# print xco2 data with relative area\'s center\n'
+        'SELECT t_co2.id, ST_X(t_co2.geometry) as long, ST_Y(t_co2.geometry) as lat, ST_AsText(t_areas.center) FROM t_co2, t_areas WHERE ST_Contains(t_areas.aoi, t_co2.geometry);'
+        '###########'
+    )
 
-    pass
+
+def test_should_load_data_and_return_result_proxy():
+    query = Xco2.__table__.select().limit(5)
+    proxy = dbProxy.alchemy.execute(query)
+    one = proxy.fetchall()
+    if one:
+        for o in one:
+            print(o.id)
+    else:
+        print('Database is void')
 
 
 def test_should_update_an_exisiting_area():
@@ -71,6 +92,7 @@ if __name__ == '__main__':
     """Choose a test from above"""
     rng, square = TEST1
     try:
-        test_should_store_a_new_area(rng, square)
+        test_should_store_new_points_and_areas(rng, square)
+        test_should_load_data_and_return_result_proxy()
     except KeyboardInterrupt as e:
         raise e

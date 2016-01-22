@@ -81,7 +81,12 @@ Test storing operations on the database for t_co2 table
         #print(outcome)
         #assert all(outcome[0:-2]) == True
 
-
+    """@unittest.skipIf(REFACTOR, 'Refactoring')
+    def test_check_if_correct_results_are_stored_in_geojson(self):
+        # pick a random area in the db
+        # find the array of coordinates of these points
+        # compare this array with the one in the 'data' field
+        raise NotImplemented"""
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_the_records_in_the_db(self):

@@ -26,7 +26,7 @@ def util_populate_table(dataset, lentest):
     luke = create_generator_from_dataset(dataset, lentest)
 
     samples = [
-        xco2Ops.store_xco2(
+        Xco2.store_xco2(
             Xco2(
                 xco2=d.xco2,
                 timestamp=d.timestamp,
