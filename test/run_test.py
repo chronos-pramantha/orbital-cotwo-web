@@ -3,14 +3,14 @@ import unittest
 
 __author__ = 'Lorenzo'
 
-from test.tests_base_class import *
-from test.tests_querying import *
-from test.tests_storedata import *
-from test.tests_querying_spatial import *
-from test.tests_formatdata import *
-from test.tests_datafiles import *
-#from test.tests_server import
-#from test.tests_webserver_query import
+from test.test_base_class import *
+from test.test_querying import *
+from test.test_storedata import *
+from test.test_querying_spatial import *
+from test.test_formatdata import *
+from test.test_datafiles import *
+#from test.test_server import
+#from test.test_webserver_query import
 
 
 def suite():

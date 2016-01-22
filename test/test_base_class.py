@@ -81,14 +81,13 @@ Test the object mapper to table t_co2.
         """Test if the right fields are created in the table"""
         names = [k for k in Xco2.__table__.columns.keys()]
         #print(names)
-        self.assertEqual(names, ['id', 'xco2', 'timestamp', 'coordinates', 'pixels'])
+        self.assertEqual(names, ['id', 'xco2', 'timestamp', 'geometry'])
 
     def test_should_return_a_table_insert_string(self):
         ins = Xco2.__table__.insert()
         test = (
-            'INSERT INTO t_co2 (id, xco2, timestamp, coordinates, pixels) '
-            'VALUES (:id, :xco2, :timestamp, ST_GeogFromText(:coordinates), '
-            'ST_GeomFromEWKT(:pixels))'
+            'INSERT INTO t_co2 (id, xco2, timestamp, geometry) '
+            'VALUES (:id, :xco2, :timestamp, ST_GeomFromEWKT(:geometry))'
         )
         self.assertEqual(test, str(ins))
         #print(str(ins))

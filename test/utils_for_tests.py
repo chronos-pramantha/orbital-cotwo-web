@@ -3,7 +3,7 @@
 This module contains utilities to be used to prepare data for tests
  setting up and tearing down.
 """
-from random import randint
+from random import randint, randrange, uniform
 
 __author__ = 'Lorenzo'
 
@@ -53,5 +53,18 @@ def pick_random_sample(dataset, samples):
     test_point_pk, test_areas_pk = samples[i][0][0], samples[i][1]
     long, lat = dataset['longitude'][i], dataset['latitude'][i]
     return i, test_point_pk, test_areas_pk, long, lat
+
+
+def rand_coordinates(squared=False):
+    if squared:
+        # generate coordinates only in one AoI (a square of 1.4 degree of size)
+        return uniform(-136.000, -134.600), uniform(-35.000, -33.600)
+    else:
+        # generate random coords
+        return uniform(-180.000, 179.000), uniform(-90.000, 89.000)
+
+
+def rand_data():
+    return uniform(285.000, 400.000)
 
 # ##### ############### ######################################################

@@ -91,8 +91,10 @@ Test the Areas mapper to table t_areas.
         print(shape)
         try:
             conversion = self.conn.execute(
-                'SELECT \'' + shape + '\'::geometry;'
-            ).fetchall()
+                'SELECT %s::geometry;',
+                (shape, )
+            ).first()
+            assert conversion
         except Exception as e:
             print('TEST FAILED')
             raise e
@@ -100,7 +102,7 @@ Test the Areas mapper to table t_areas.
         # (-179.048 -22.1178405762), (-179.048 -23.5178405762), (-179.748110962 -22.8178), ))'::geometry;
         print('TEST PASSED\n')
 
-    @unittest.skipIf(REFACTOR, "REFACTORING")
+    @unittest.expectedFailure
     def test_insert_area_and_center(self):
         """Test insertion of row in t_areas"""
         geom = spatialOps.shape_geometry(self.long, self.lat)
