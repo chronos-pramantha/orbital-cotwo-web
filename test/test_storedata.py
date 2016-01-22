@@ -7,7 +7,6 @@ __author__ = 'Lorenzo'
 
 from src.xco2 import Xco2, Areas
 from src.dbproxy import dbProxy, start_postgre_engine
-from src.xco2ops import xco2Ops
 from src.formatdata import create_generator_from_dataset
 from files.loadfiles import return_files_paths, return_dataset
 from test.utils_for_tests import util_populate_table, util_truncate_table
@@ -43,7 +42,9 @@ Test storing operations on the database for t_co2 table
         """Test the data inserted in tables by util_populate_table"""
         # pick a set of rows in t_co2 as points
         # try to find centers==points in t_areas
-        samples = tuple([s[0][0] for s in self.samples])
+        print(self.samples)
+        samples = tuple([s[0] for s in self.samples])
+        print(samples)
         # try to find aoi that contains points
         q2 = (
             'SELECT t_areas.aoi, t_areas.data '
@@ -60,13 +61,13 @@ Test storing operations on the database for t_co2 table
         )
         #print(r)
         # check if aoi.data contains centers
-        from src.spatial import spatialOps
+        from src.spatial import spatial
         outcome = []
         for result in r:
             coords = [tuple(cc['geometry']['coordinates']) for cc in result[1]['features']]
             aoi = result[0]
             for c in coords:
-                geom = spatialOps.shape_geometry(c[0], c[1])
+                geom = spatial.shape_geometry(c[0], c[1])
                 q3 = (
                     'SELECT ST_Contains(%s, %s::geometry);'
                 )
@@ -144,11 +145,12 @@ Test storing operations on the database for t_co2 table
     @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_bulk_dump(self):
         """Test Xco2.bulk_dump()"""
+        from src.formatdata import bulk_dump
         print('#### TEST5 ####')
         session2 = dbProxy.create_session(db='test', engine=self.engine)
         util_truncate_table(session2, [Xco2, Areas])
 
-        xco2Ops.bulk_dump(
+        bulk_dump(
             create_generator_from_dataset(self.dataset, 8)
         )
         rows = self.session.query(Xco2).count()

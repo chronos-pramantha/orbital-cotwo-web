@@ -10,9 +10,8 @@ __author__ = 'Lorenzo'
 from files.loadfiles import return_files_paths, return_dataset
 
 from src.xco2 import Xco2, Areas
-from src.xco2ops import xco2Ops
 from src.dbproxy import dbProxy, start_postgre_engine
-from src.spatial import spatialOps
+from src.spatial import spatial
 from test.utils_for_tests import util_populate_table, util_truncate_table, pick_random_sample
 
 
@@ -73,7 +72,7 @@ Test querying the Xco2 mapper and the t_co2 table.
         r1 = select([Xco2]).where(Xco2.id == self.test_point_pk)
         r = self.conn.execute(r1).first()
         try:
-            spatialOps.unshape_geo_hash(r[3])
+            spatial.unshape_geo_hash(r[3])
             print('PASSED')
         except Exception as e:
             print('FAILED')

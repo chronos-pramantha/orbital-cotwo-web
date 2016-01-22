@@ -8,7 +8,6 @@ from random import randint, randrange, uniform
 __author__ = 'Lorenzo'
 
 from src.formatdata import create_generator_from_dataset
-from src.xco2ops import xco2Ops
 from src.xco2 import Xco2
 
 
@@ -25,16 +24,17 @@ def util_populate_table(dataset, lentest):
     # create a generator from the first lentest records in the dataset
     luke = create_generator_from_dataset(dataset, lentest)
 
-    samples = [
-        Xco2.store_xco2(
-            Xco2(
-                xco2=d.xco2,
-                timestamp=d.timestamp,
-                latitude=d.latitude,
-                longitude=d.longitude
-            )
-        ) for d in luke
-    ]
+    samples = []
+    for d in luke:
+        new = Xco2(
+            xco2=d.xco2,
+            timestamp=d.timestamp,
+            latitude=d.latitude,
+            longitude=d.longitude
+        )
+        samples.append(
+            new.store_xco2()
+        )
 
     return samples
 
@@ -50,7 +50,7 @@ def util_truncate_table(session, table=[Xco2]):
 
 def pick_random_sample(dataset, samples):
     i = i = randint(0, 19)
-    test_point_pk, test_areas_pk = samples[i][0][0], samples[i][1]
+    test_point_pk, test_areas_pk = samples[i][0], samples[i][1]
     long, lat = dataset['longitude'][i], dataset['latitude'][i]
     return i, test_point_pk, test_areas_pk, long, lat
 

@@ -11,9 +11,8 @@ __author__ = 'Lorenzo'
 from files.loadfiles import return_files_paths, return_dataset
 
 from src.xco2 import Xco2, Areas
-from src.xco2ops import xco2Ops
 from src.dbproxy import dbProxy, start_postgre_engine
-from src.spatial import spatialOps
+from src.spatial import spatial
 from test.utils_for_tests import util_populate_table, util_truncate_table, pick_random_sample
 
 TEST_LENGTH = 20
@@ -60,7 +59,7 @@ Test the Areas mapper to table t_areas.
     @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_should_test_shape_geometry(self):
         """Test shape_geometry() """
-        geom = spatialOps.shape_geometry(
+        geom = spatial.shape_geometry(
             self.luke.longitude,
             self.luke.latitude
         )
@@ -73,7 +72,7 @@ Test the Areas mapper to table t_areas.
     @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_should_test_shape_geography(self):
         """Test shape_geography() """
-        geog = spatialOps.shape_geography(
+        geog = spatial.shape_geography(
             self.luke.latitude,
             self.luke.longitude
         )
@@ -86,8 +85,8 @@ Test the Areas mapper to table t_areas.
     @unittest.skipIf(REFACTOR, "REFACTORING")
     def test_shape_aoi(self):
         print('TEST2<<<<')
-        geom = spatialOps.shape_geometry(self.long, self.lat)
-        shape, center = spatialOps.shape_aoi(geom)
+        geom = spatial.shape_geometry(self.long, self.lat)
+        shape, center = spatial.shape_aoi(geom)
         print(shape)
         try:
             conversion = self.conn.execute(
@@ -105,8 +104,8 @@ Test the Areas mapper to table t_areas.
     @unittest.expectedFailure
     def test_insert_area_and_center(self):
         """Test insertion of row in t_areas"""
-        geom = spatialOps.shape_geometry(self.long, self.lat)
-        shape, center = spatialOps.shape_aoi(geom)
+        geom = spatial.shape_geometry(self.long, self.lat)
+        shape, center = spatial.shape_aoi(geom)
         try:
             self.conn.execute(
                 'INSERT INTO t_areas(center, aoi) VALUES (\'{center}\', \'{polygon}\');'.format(

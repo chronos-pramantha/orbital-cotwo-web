@@ -47,15 +47,15 @@ def test_should_store_new_points_and_areas(rng, square):
         '# RESULTS\n\n'
         '# Try the following queries on the database:\n'
         '#####\n'
-        'SELECT t_co2.id, ST_X(geometry) as long, ST_Y(geometry) as lat, t_areas.data as geojson FROM t_co2, t_areas LIMIT 1;\n'
-        'SELECT ST_AsText(pixels), t_areas.data FROM t_co2, t_areas LIMIT 1;\n'
+        'SELECT t_co2.id, ST_X(geometry) as long, ST_Y(geometry) as lat, t_areas.data as geojson FROM t_co2, t_areas WHERE ST_Contains(t_areas.aoi, t_co2.geometry) LIMIT 1;\n'
+        'SELECT ST_AsText(t_co2.geometry), t_areas.data FROM t_co2, t_areas WHERE ST_Contains(t_areas.aoi, t_co2.geometry);\n'
         '# each area contains the GeoJSON in the \'data\' field\n'
         'SELECT id, center from t_areas;\n'
         '# compare the number of insertions with the number of areas (should be around 10%)\n'
         'SELECT count(*) from t_co2;\n'
         'SELECT count(*) from t_areas;)\n'
         '# print xco2 data with relative area\'s center\n'
-        'SELECT t_co2.id, ST_X(t_co2.geometry) as long, ST_Y(t_co2.geometry) as lat, ST_AsText(t_areas.center) FROM t_co2, t_areas WHERE ST_Contains(t_areas.aoi, t_co2.geometry);'
+        'SELECT t_co2.id, ST_X(t_co2.geometry) as long, ST_Y(t_co2.geometry) as lat, ST_AsText(t_areas.center) as area_center FROM t_co2, t_areas WHERE ST_Contains(t_areas.aoi, t_co2.geometry);'
         '###########'
     )
 
