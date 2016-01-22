@@ -7,6 +7,8 @@ other tests must be manually truncated.
 Consistency of data stored can be tested by entering queries from
 psql or using the method below. It is useful to understand how the
 popping-over algorithm works.
+
+#todo: add also some automatic checks for the inserted data
 """
 from datetime import datetime
 __author__ = 'Lorenzo'

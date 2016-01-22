@@ -6,9 +6,9 @@ directory
 
 __author__ = 'Lorenzo'
 
+from src.xco2 import Xco2
 from files.loadfiles import return_dataset, return_files_paths
 from src.formatdata import create_generator_from_dataset
-from src.xco2ops import xco2Ops
 
 
 def main(full=False):
@@ -26,17 +26,18 @@ def main(full=False):
         luke = (create_generator_from_dataset(d) for d in dataset)
     #print(luke, )
 
-    # consume the generator of generators
-    # change database name below ('test' or 'gis') to decide which one to use
+    # Luke is a >> generator of generators <<
     print('DUMPING...')
+    from src.formatdata import bulk_dump
     i = 0
-
     while True:
         try:
-            xco2Ops.bulk_dump(next(luke))
-            i += 1
+            bulk_dump(next(luke))
         except StopIteration:
-            print('>>> XCO2 Dump finished <<<')
+            print('>>> {} Xco2 data dumped <<<'.format(i))
+            break
+        except KeyboardInterrupt:
+            break
         if i % 1000 == 0:
             print(i)
 

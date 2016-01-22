@@ -10,6 +10,7 @@ __author__ = 'Lorenzo'
 
 from config.config import DATABASES, USER, PWD
 
+
 def start_postgre_engine(db=None, echo=False):
     """
     Return SQLAlchemy engine.
@@ -21,6 +22,7 @@ def start_postgre_engine(db=None, echo=False):
     from config.config import TEST
     # use the db in the argument or check the TEST variable
     db = db if db and db in DATABASES else {True: 'test', False: 'gis'}.get(TEST)
+    print('ENGINE STARTED on DB: {}\n'.format(db))
     return db, create_engine(
         'postgresql://{}:{}@localhost/{}'.format(
             USER, PWD, db
@@ -28,12 +30,14 @@ def start_postgre_engine(db=None, echo=False):
         echo=echo
     )
 
-DB, ENGINE = start_postgre_engine()   # set the db here
+DB, ENGINE = start_postgre_engine()
 
 
 class dbProxy:
     """
     Handle context variable for database access.
+
+    Database Manipulation Layer Wrapper. Wraps Access/Data Layer.
 
     It let perform the query in two ways:
     - using the psycopg2 driver's cursor with the `_connected()` and
@@ -45,7 +49,7 @@ class dbProxy:
     alchemy = ENGINE.connect()
 
     @classmethod
-    def connection(cls):
+    def __connection(cls):
         """Connect to the PostgreSQL database.  Returns a database connection."""
         return psycopg2.connect('postgresql://{}:{}@localhost/{}'.format(
                 USER, PWD, DB
@@ -58,7 +62,7 @@ class dbProxy:
         Wrap execute() function to open and close properly connection and cursor.
         Use psycopg2 as driver.
         """
-        conn = cls.connection()
+        conn = cls.__connection()
         cur = conn.cursor()
         query = cur.mogrify(
             query,
@@ -96,8 +100,6 @@ class dbProxy:
     @classmethod
     def create_tables_in_databases(cls, base):
         """Create a Schema to store CO2 data in the official and test databases"""
-        from src.xco2 import Areas
-        from sqlalchemy import func
         for db in DATABASES:
             engine = start_postgre_engine(db)
             base.metadata.create_all(

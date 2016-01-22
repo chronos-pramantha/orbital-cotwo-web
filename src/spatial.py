@@ -11,6 +11,8 @@ from src.dbproxy import dbProxy
 class spatialOps(dbProxy):
     """
     Handle spatial read operations on the database.
+
+    Part of Database Manipulation Layer.
     """
     @classmethod
     def shape_geometry(cls, long, lat):

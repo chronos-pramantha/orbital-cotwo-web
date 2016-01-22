@@ -15,6 +15,8 @@ from src.spatial import spatialOps
 
 class areasAlgorithm:
     """
+    Processing Model. Business Layer.
+
     When a client requests a center `(x, y)`, the lookup table can find the square
     containing that point and respond with the JSON. (If a point is not in any square,
     the algorithm looks on the areas of the closest (in a 200 Km radius) centers to
@@ -27,11 +29,10 @@ class areasAlgorithm:
 
     It leverages the methods in the dataOps, spatialOps and areaOps classes.
     """
-    def __init__(self, area, **kwargs):
+    def __init__(self, area):
         self.pk = area[0]
-        self.geometry = area[1]
+        self.aoi = area[1]
         self.center = area[2]
-        # these below are all EWKT strings
         self.data = area[3]
 
     @property
@@ -39,12 +40,12 @@ class areasAlgorithm:
         """
         Find the area the geometry belong to, if nay in the database.
 
-        Just an easier accessor for areasDbOps.get_aoi_that_contains_().
+        Just an easier accessor for AreasOps.get_aoi_that_contains_().
 
         :return tuple: (False, None) or (True, (object_tuple,))
         """
-        return areasDbOps.get_aoi_that_contains_(
-            self.geometry
+        return areasOps.get_aoi_that_contains_(
+            self.aoi
         )
 
     @property
@@ -69,34 +70,14 @@ class areasAlgorithm:
         pass
 
 
-class areasDbOps(dbProxy):
+class areasOps(dbProxy):
     """
     All DB operations connected to areaAlgorithm calculations and storages.
     Also include DB operations on Xco2 table.
 
+    Part of Database Manipulation Layer.
+
     """
-    @classmethod
-    def store_area(cls, geometry, xco2):
-        """
-        Given a geometry of a stored point, it adds this point to an existing Area
-        of Interest or stores a new AoI with center the given geoemtry.
-
-        :param str geometry: a EWKT string for a geometry
-        :return:
-        """
-        aoi = cls.get_aoi_that_contains_(geometry)
-        if aoi.check is True:
-            # add the point to the existing aoi
-            aoi = cls.update_aoi_geojson(geometry, aoi.row, xco2)
-        elif aoi.check is False:
-            # create aoi with center geometry and new geojson, return it
-            aoi = cls.store_new_aoi(geometry)
-        else:
-            raise ValueError('get_aoi_that_contains_(geometry) returned a wrong value '
-                             'for key \'check\'. It can be only True or False')
-
-        return aoi
-
     @classmethod
     def get_aoi_that_contains_(cls, geometry):
         """
@@ -239,8 +220,3 @@ class areasDbOps(dbProxy):
             (area, )
         ).fetchall()
         return result
-
-
-__all__ = [
-    'add_point_or_create_geojson'
-]

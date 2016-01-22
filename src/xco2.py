@@ -16,6 +16,7 @@ from sqlalchemy.dialects.postgresql import JSON, DOUBLE_PRECISION
 from sqlalchemy import UniqueConstraint
 from geoalchemy2 import Geography, Geometry
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import IntegrityError
 
 __author__ = 'Lorenzo'
 
@@ -42,7 +43,7 @@ class Xco2(Base):
         Geometry('POINT', srid=3857, spatial_index=True),
         nullable=False
     )
-    # #todo: implemennt an 'archive' mechanism for newer relevations
+    # #todo: implement an 'archive' mechanism for newer relevations
     # #todo: when this constraint is violated, record should be archived
     # #todo: and the new record with the new relevation should be stored
     __table_args__ = (
@@ -58,14 +59,45 @@ class Xco2(Base):
         self.latitude = latitude
         self.longitude = longitude
 
-    # #todo: implement the reconstructor (from query object to py object)
-    # #todo: reconstructor can return namedtuple?
-    @orm.reconstructor
-    def init_on_load(self):
+    def store_xco2(self):
+        """
+        Main function to the database when storing Xco2 data.
+
+        INSERT procedure is as follow:
+            - insert point > belong the point to any known area?
+            - if Y > INSERT point
+            - if N > create area with center=point using shape_aoi()
+
+        At database initialization, this method is called to populate both
+         the Xco2 and the Areas tables following the pop-above algorithm.
+
+        Store a Xco2 datum and store or update its related Area of Interest.
+
+        :return tuple: (pkey_xco2, pkey_area, )
+        """
         from src.spatial import spatialOps
-        unshape = spatialOps.unshape_geo_hash(str(self.geometry))
-        self.latitude = unshape[1]
-        self.longitude = unshape[0]
+        from src.dbproxy import dbProxy
+        geometry = spatialOps.shape_geometry(self.longitude, self.latitude)
+        ins = Xco2.__table__.insert().values(
+            xco2=self.xco2,
+            timestamp=self.timestamp,
+            geometry=geometry
+        )
+        try:
+            result = dbProxy.alchemy.execute(ins)
+            aoi = Areas.store_area(geometry, self.xco2)
+        except (IntegrityError, Exception) as e:
+            # #todo:
+            # integrity error happens when a datum is updated or two data are
+            # are rounded to the same coordinates (Postgis maximum tolerance is -xxx.yyy)
+            # compare dates, if record is more recent store it and archive the older one;
+            # in the latter case, just pass
+            # #### raise e
+            # at the moment pass
+            pass
+            return None, None
+
+        return result.inserted_primary_key, aoi.pk
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(
@@ -74,37 +106,20 @@ class Xco2(Base):
 
     def __str__(self):
         return 'Point {coordinates!s} has Xco2 level at {xco2!s}'.format(
-            coordinates=self._long_lat,
+            coordinates=str(self.geometry),
             xco2=self.xco2
         )
 
-    # #todo: implement descriptors ?
     @property
-    def _long_lat(self):
-        """Return latitude and longitude"""
-        if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
-            return self.longitude, self.latitude
-        else:
-            raise NotImplemented('This method is accessible only if the object'
-                                 'is created with the Xco2 constructor')
-
-    @property
-    def hash_coordinates(self):
-        from src.spatial import shape_geography
-        if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
-            return shape_geography(self.longitude, self.latitude)
-        else:
-            raise NotImplemented('This method is accessible only if the object'
-                                 'is created with the Xco2 constructor')
-
-    @property
-    def hash_pixels(self):
-        from src.spatial import shape_geometry
-        if all(k in self.__dict__.keys() for k in ('latitude', 'longitude',)):
-            return shape_geometry(self.longitude, self.latitude)
-        else:
-            raise NotImplemented('This method is accessible only if the object'
-                                 'is created with the Xco2 constructor')
+    def named_tuple(self):
+        from collections import namedtuple
+        Xco2Named = namedtuple('Xco2Named', ['id', 'xco2', 'timestamp', 'geometry'])
+        return Xco2Named(
+            id=self.id,
+            xco2=self.xco2,
+            timestamp=self.timestamp,
+            geometry=self.geometry
+        )
 
 
 class Areas(Base):
@@ -145,16 +160,11 @@ class Areas(Base):
         UniqueConstraint('aoi', 'center', name='uix_aoi_center'),
     )
 
-    def __init__(self, center, data=None):
+    def __init__(self, center):
         from src.spatial import spatialOps
-        from src.areasops import add_point_or_create_geojson
         self.center = center
         self.aoi = spatialOps.shape_aoi(self.center)
-        if not data:
-            self.data = add_point_or_create_geojson(self.center)
-        else:
-            raise ValueError('Areas can be used only as a constructor when '
-                             'Aoi are created')
+        self.data = None
 
     def __repr__(self):
         return 'Area POLYGON: {aoi!r}'.format(
@@ -166,6 +176,48 @@ class Areas(Base):
             aoi=str(self.aoi),
             center=str(self.center)
         )
+
+    @classmethod
+    def store_area(cls, geometry, xco2):
+        """
+        Given a geometry of a stored point, it adds this point to an existing Area
+        of Interest or stores a new AoI with center the given geoemtry.
+
+        :param str geometry: a EWKT string for a geometry
+        :param float xco2: a float for xco2 datum
+        :return areasAlgorithm:
+        """
+        from src.areasops import areasOps
+        aoi = areasOps.get_aoi_that_contains_(geometry)
+        if aoi.check is True:
+            # add the point to the existing aoi
+            try:
+                aoi = areasOps.update_aoi_geojson(geometry, aoi.row, xco2)
+            except Exception as e:
+                raise e
+        elif aoi.check is False:
+            # create aoi with center geometry and new geojson, return it
+            try:
+                aoi = areasOps.store_new_aoi(geometry)
+            except Exception as e:
+                raise e
+        else:
+            raise ValueError('get_aoi_that_contains_(geometry) returned a wrong value '
+                             'for key \'check\'. It can be only True or False')
+
+        return aoi
+
+    @property
+    def named_tuple(self):
+        from collections import namedtuple
+        AreasNamed = namedtuple('AreasNamed', ['id', 'aoi', 'center', 'data'])
+        return AreasNamed(
+            id=self.id,
+            aoi=self.aoi,
+            center=self.center,
+            data=self.data
+        )
+
 
 if __name__ == '__main__':
     try:
