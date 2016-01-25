@@ -72,11 +72,11 @@ def test_should_load_data_and_return_result_proxy():
 
 
 def test_should_update_an_exisiting_area():
-    from src.areasops import areasDbOps
-    from src.spatial import spatialOps
-    geometry = spatialOps.shape_geometry(rand_coordinates()[0], rand_coordinates()[1])
-    square = spatialOps.shape_aoi(geometry)
-    areasDbOps.store_area(geometry)
+    from src.areasops import areasOps
+    from src.spatial import spatial
+    geometry = spatial.shape_geometry(rand_coordinates()[0], rand_coordinates()[1])
+    square = spatial.shape_aoi(geometry)
+    areasOps.store_area(geometry)
 
 
 def test_should_find_all_xco2_points_in_aoi():
