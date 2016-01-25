@@ -105,6 +105,11 @@ CREATE INDEX idx_table_geom ON table USING GIST(geom);
 CREATE TABLE testgeog(gid serial PRIMARY KEY, the_geog geography(POINT,4326) );
 ```
 
+### Create a shapefile from a query
+```
+pgsql2shp -f xco2_shp -h localhost -u gis -P gis gis "SELECT xco2, geometry FROM t_co2 WHERE true"
+```
+
 # Some Math
 SQL query to retrieve all the points from a given distance from a point:
 ```

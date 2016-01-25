@@ -1,13 +1,15 @@
 # A Web interface for OCO2 data
 
 ## Run the code
-* install requirements.txt (Python 3.4+ required)
+* install `requirements.txt` (Python 3.4+ required)
 * install PostgreSQL and PostGIS extension. In Ubuntu:  
 ```
 # depending on you Python version you could need also 
 # pythonX.Y-dev and/or libpg-dev
 sudo apt-get install postgresql postgresql-contrib
-# substitute X.y with the version of potegresql installed
+# check that Postgres is running
+sudo service postgresql status
+# substitute X.Y with the version of potegresql installed
 sudo apt-get install postgresql-server-dev-X.Y
 # substitute Z.W with the version of postgis installed
 sudo apt-get install postgresql-X.Y-postgis-Z.W
