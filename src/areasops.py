@@ -1,11 +1,14 @@
 # coding=utf-8
 """
-Thia modulw contains a class that is a wrapper around Database data
+Thia module contains a class that is the main class of the server
  and a class that manage all the operations on the t_areas table.
+ The t_areas table is the one required to serve the client.
 """
 from collections import namedtuple
 from sqlalchemy import select, func
 import json
+from pygeoif import from_wkt, Point, Polygon
+
 __author__ = 'Lorenzo'
 
 from src.xco2 import Areas, Xco2
@@ -19,7 +22,7 @@ class Controller:
 
     Take a POINT or a POLYGON EWKT and perform the magic.
     It get created at each request to handle the procedure of
-    aggregating and returnig Xco2 to the client.
+    aggregating and returning Xco2 to the client.
     """
     elements = ('POINT', 'POLYGON', )
 
@@ -29,7 +32,14 @@ class Controller:
         else:
             raise ValueError('Controller: geometry has to be '
                              'a EWKT POINT or POLYGON')
-        self.geometry = geometry
+        self.geometry = geometry                   # EWKT string
+        self.geo_object = from_wkt(self.geometry)  # pygeoif object
+
+    def __str__(self):
+        return 'Controller View for {element!s} at coordinates {coords!r}'.format(
+            element=str(self.element),
+            coords=str(self.geometry)
+        )
 
     @property
     def is_view(self):
@@ -38,19 +48,40 @@ class Controller:
         If the Controller is a point is False.
         :return bool:
         """
-        return False
+        if isinstance(self.geo_object, Point):
+            return False
+        elif dbProxy.alchemy.execute(
+                'SELECT count(*) FROM t_areas WHERE ST_Contains(%s, aoi)',
+                ((self.geometry, ), )
+             ).first() == 1:
+            return False
+        else:
+            return True
 
     @property
-    def pk(self):
+    def pks(self):
         """
-        Return the primary key of the Controller's geometry if exist,
-        else fallback in look_for_closest_point()
+        Return the primary keys of the Controller's geometry if exist
+        (area or center or closest centers)
         :return int: pk
         """
         # if it's a point, check t_areas.center and t_co2.geometry
-        # if it's a polygon, check t_areas.aoi
-        # else is a View, create a View (a collection of AoI in the same map view) object
-        return 1
+        if isinstance(self.geo_object, Point):
+            # check in a larger radius circle for closest center
+            query = select([Areas.id]).where(Areas.center == self.geometry)
+            result = areasOps.exec_func_query(query, multi=False)
+            if result:
+                return True, result
+            else:
+                closest = self.what_are_the_closest_centers_to_(self.geometry)
+                return True, closest
+        else:
+            query = select([Areas.id]).where(func.ST_Contains(self.geometry, Areas.aoi))
+            # print(str(query.compile()))
+            result = areasOps.exec_func_query(query, multi=True)
+            if not result:
+                return False, None
+            return True, result
 
     @property
     def center(self):
@@ -58,22 +89,30 @@ class Controller:
         Return the point itself or the center of the polygon.
         :return:
         """
-        # if it's a point, return the point
-        # if it's a polygon, calculate and return the center of the polygon
-        # else is a View, create a View (a collection of AoI in the same map view) object
-        return 1
+        if isinstance(self.geo_object, Point):
+            # if it's a point, return the point
+            closest = self.what_are_the_closest_centers_to_(self.geometry)[0]
+        elif isinstance(self.geo_object, Polygon):
+            # if it's a polygon, calculate and return the center of the polygon
+            coords = self.geo_object.__geo_interface__['coordinates'][0]
+            side = abs(coords[0][0]-coords[0][1])
+            return spatial.shape_geometry(coords[0][0] + side/2, coords[0][1] - side/2)
+        else:
+            raise ValueError('cls.center() method: geometry can be only {}'.format(
+                self.elements
+            ))
 
     @classmethod
     def is_point_in_any_area(cls, point):
         """
-        Find the area the geometry belong to, if nay in the database.
+        Find the area the geometry belong to, if any in the database.
 
         Just an easier accessor for AreasOps.get_aoi_that_contains_().
 
         :return tuple: (False, None) or (True, (object_tuple,))
         """
         query = select([Areas]).where(func.ST_Contains(Areas.aoi, point))
-        print(str(query.compile()))
+        #print(str(query.compile()))
         result = areasOps.exec_func_query(query, multi=False)
         if not result:
             return False, None
@@ -82,18 +121,56 @@ class Controller:
     @classmethod
     def what_are_the_closest_centers_to_(cls, point):
         """
-        Returns the 3 closest area's centers from a point.
+        Returns the closest area's centers from a point.
+
+        Algorithm:
+            X -1
+            Y +1
+            X 1
+            Y -1
+
         :param point: a EWKT geometry
-        :return list: of 3 centers in the t_areas table
+        :return list: of centers in the t_areas table
         """
-        pass
+        # build a square of side 'size' degrees around the point
+        mapping = {
+            '0': (0, -3),
+            '1': (1, 3),
+            '2': (0, 3),
+            '3': (1, -3)
+        }
+
+        def increasing_area(p, results='start', step=0):
+            # check if square contains point
+            # if not recursively increase the size
+            if results != 'start' and results or step == 25:
+                return results[0] if results else None
+
+            print(p, step)
+            query = select([Areas.center]).where(func.ST_Contains(Areas.aoi, p))
+            #print(str(query.compile()))
+            results = areasOps.exec_func_query(query, multi=True)
+            lookup = from_wkt(p).__geo_interface__['coordinates']
+            stepping = lookup
+            for r in range(100):
+                s = step - 4
+                if mapping.get(str(s), None):
+                    if step % 2 == 0:
+                        stepping = (lookup[mapping.get('2')[0]] + mapping.get('2')[1], lookup[1])
+                    else:
+                        stepping = (lookup[0], lookup[mapping.get('3')[0]] + mapping.get('3')[1])
+            step += 1
+            new_point = spatial.shape_geometry(stepping[0], stepping[1])
+            return increasing_area(new_point, results, step)
+
+        return increasing_area(point)
 
     def which_areas_contains_this_polygon(self):
         """
         Return the list of areas contained by the controller's polygon
         :return generator: ResultProxy
         """
-        query = select([Areas]).where(func.ST_Contains(self.polygon, Areas.aoi))
+        query = select([Areas]).where(func.ST_Contains(self.geometry, Areas.aoi))
         print(str(query.compile()))
         results = areasOps.exec_func_query(query, multi=True)
         return results
@@ -103,7 +180,7 @@ class Controller:
         Return the list of points contained by this area
         :return generator: ResultProxy
         """
-        query = select([Xco2]).where(func.ST_Contains(self.polygon, Xco2.geometry))
+        query = select([Xco2]).where(func.ST_Contains(self.geometry, Xco2.geometry))
         print(str(query.compile()))
         results = areasOps.exec_func_query(query, multi=True)
         return results
@@ -215,7 +292,6 @@ class areasOps(dbProxy):
               }
             })
         return geojson
-
 
     @classmethod
     def initialize_geojson(cls, point):

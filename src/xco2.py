@@ -102,7 +102,7 @@ class Xco2(Base):
             print(str(e))
             return None, None
 
-        return result.inserted_primary_key[0], aoi.pk
+        return result.inserted_primary_key[0], aoi.pks
 
     def __repr__(self):
         return 'Point {coordinates!r}'.format(

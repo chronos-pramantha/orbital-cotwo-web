@@ -5,6 +5,8 @@ import json
 __author__ = 'Lorenzo'
 
 from src.webserver.utils import get_coordinates_from_geojson
+from src.areasops import Controller
+from src.spatial import from_geojson_to_ewkt
 
 
 class Xco2:
@@ -12,23 +14,23 @@ class Xco2:
 
     Use only POST method.
     """
-    allowed = ('area', )
+    allowed = ('polygon', 'point' )
 
     def on_post(self, req, resp):
         """Handles POST requests"""
         resp.status = falcon.HTTP_200
         # grab 'geojson' from req.context
-        # gather the needed resources
-        # create a dictionary in GeoJSON format in 'result' for req.context
-        aoi = req.context['geojson']
-        from src.webserver.utils import build_a_select
-        coords = [g for g in list(get_coordinates_from_geojson(aoi))[:3]]
-        coords = (coords[0], coords[2], )
+        data = req.context['geojson']
+        # get coordinates
+        coords = get_coordinates_from_geojson(data)
+        # shape the geojson into a EWKT
+        polygon = from_geojson_to_ewkt(coords)
+        # pass the EWKT to Controller
+        controller = Controller(polygon)
+        # perform querying
+        print(repr(controller))
 
-        from src.storedata import go_execute
-        results = go_execute(build_a_select(coords))
-
-        req.context['result'] = str([r for r in results])
+        #req.context['result'] = str([r for r in results])
 
 
 class Hello:
@@ -141,6 +143,6 @@ app = falcon.API(middleware=[
 #
 # ##### Define routes
 #
-app.add_route('/co2/by/area', class_)
+app.add_route('/co2/by/polygon', class_)
 app.add_route('/', hello)
 

@@ -3,10 +3,12 @@
 This script will dump all the files (or a test sample) from the files/nc4/
 directory
 """
+from random import randint
+import sys
+
 
 __author__ = 'Lorenzo'
 
-from random import randint
 from files.loadfiles import return_dataset, return_files_paths
 from src.formatdata import create_generator_from_dataset
 
@@ -41,6 +43,8 @@ def main(full=False):
             break
         except KeyboardInterrupt:
             break
+
+    sys.exit(0)
 
 
 if __name__ == '__main__':

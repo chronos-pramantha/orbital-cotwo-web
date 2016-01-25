@@ -1,6 +1,6 @@
 # coding=utf-8
-import psycopg2
 from sqlalchemy import func, select
+import geojson
 
 __author__ = 'Lorenzo'
 
@@ -42,7 +42,7 @@ class spatial(dbProxy):
         )
 
     @classmethod
-    def shape_aoi(cls, center):
+    def shape_aoi(cls, center, size=1.4):
         """Build a square around a center point, to define a Area of Interest.
 
         Basic algorithm to build a square:
@@ -61,7 +61,7 @@ class spatial(dbProxy):
 
         :return tuple: polygon's EWKT and center's EWKT
         """
-        _SIZE = 1.4  # polygon side = 1.4 degree
+        _SIZE = size  # polygon side = 1.4 degree
 
         center_ = cls.unshape_geo_hash(center)
         polygon = [[center_[0] - 0.5 * _SIZE, center_[1] + 0.5 * _SIZE],
@@ -69,17 +69,26 @@ class spatial(dbProxy):
                    [center_[0] + 0.5 * _SIZE, center_[1] - 0.5 * _SIZE],
                    [center_[0] - 0.5 * _SIZE, center_[1] - 0.5 * _SIZE],
                    [center_[0] - 0.5 * _SIZE, center_[1] + 0.5 * _SIZE]]
-        string = str()
-        for i, p in enumerate(polygon):
-            string += str(p[0]) + ' ' + str(p[1])
-            if i != len(polygon) - 1:
-                string += ', '
 
-        shape = 'SRID=3857;POLYGON(({polygon}))'.format(
+        shape = cls.from_list_to_ewkt(polygon)
+        return shape, center
+
+    @classmethod
+    def from_list_to_ewkt(cls, geodata):
+        """
+        Take a list of points and return a EWKT POLYGON().
+
+        :param list geodata:
+        :return str:
+        """
+        string = str()
+        for i, p in enumerate(geodata):
+            string += str(p[0]) + ' ' + str(p[1])
+            if i != len(geodata) - 1:
+                string += ', '
+        return 'SRID=3857;POLYGON(({polygon}))'.format(
             polygon=string
         )
-
-        return shape, center
 
     @classmethod
     def aggregate_aoi_data_(cls, aoi):
@@ -115,6 +124,20 @@ class spatial(dbProxy):
             **{'values': (str(geohash), str(geohash), )}
         )
 
+    @classmethod
+    def coordinates_from_geojson(cls, geojs):
+        """Return coordinates from a GeoJSON Feature.
+        :param str geojs:
+        :return generator:
+        """
+        obj = geojson.loads(geojs)
+        gen = geojson.utils.coords(obj)
+        coords = [g for g in list(gen)]
+        return coords
+
+
 
 __all__ = ['shape_geometry',
-           'shape_geography']
+           'shape_geography',
+           'from_list_to_ewkt',
+           'get_coordinates_from_geojson']
