@@ -16,6 +16,7 @@ __author__ = 'Lorenzo'
 from test.utils_for_tests import rand_coordinates, rand_data
 from src.xco2 import Xco2
 from src.dbproxy import dbProxy
+from src.spatial import spatial
 
 
 TESTLENGTH = 1000  # set a number of iteration
@@ -71,12 +72,27 @@ def test_should_load_data_and_return_result_proxy():
         print('Database is void')
 
 
-def test_should_update_an_exisiting_area():
-    from src.areasops import areasOps
+def test_should_return_an_exisiting_area():
+    from src.xco2 import Areas
+    from sqlalchemy  import func
     from src.spatial import spatial
-    geometry = spatial.shape_geometry(rand_coordinates()[0], rand_coordinates()[1])
-    square = spatial.shape_aoi(geometry)
-    areasOps.store_area(geometry)
+    # get a center from t_areas
+    # build a smaller area around it
+    # check if ST_Contains find the area in the db
+    query = Areas.__table__.select().limit(1)
+    one = dbProxy.alchemy.execute(query).first()
+    square, _ = spatial.shape_aoi(one.center, size=1)
+
+    contains = Areas.__table__.select().where(
+        func.ST_Contains(Areas.aoi, square)
+    )
+    c_query = dbProxy.alchemy.execute(contains).fetchall()
+
+    if c_query:
+        for c in c_query:
+            print(c.id, c.aoi, '\n')
+    else:
+        raise AssertionError('test_should_return_an_exisiting_area FAILED' )
 
 
 def test_should_find_all_xco2_points_in_aoi():
@@ -94,5 +110,6 @@ if __name__ == '__main__':
     try:
         test_should_store_new_points_and_areas(rng, square)
         test_should_load_data_and_return_result_proxy()
+        test_should_return_an_exisiting_area()
     except KeyboardInterrupt as e:
         raise e
