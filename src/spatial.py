@@ -63,7 +63,8 @@ class spatial(dbProxy):
         """
         _SIZE = size  # polygon side = 1.4 degree
 
-        center_ = cls.unshape_geo_hash(center)
+        center_ = center if isinstance(center, tuple) else cls.unshape_geo_hash(center)
+
         polygon = [[center_[0] - 0.5 * _SIZE, center_[1] + 0.5 * _SIZE],
                    [center_[0] + 0.5 * _SIZE, center_[1] + 0.5 * _SIZE],
                    [center_[0] + 0.5 * _SIZE, center_[1] - 0.5 * _SIZE],
@@ -140,4 +141,5 @@ class spatial(dbProxy):
 __all__ = ['shape_geometry',
            'shape_geography',
            'from_list_to_ewkt',
-           'get_coordinates_from_geojson']
+           'coordinates_from_geojson',
+           'from_list_to_ewkt']

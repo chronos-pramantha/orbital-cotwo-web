@@ -4,9 +4,8 @@ import json
 
 __author__ = 'Lorenzo'
 
-from src.webserver.utils import get_coordinates_from_geojson
 from src.areasops import Controller
-from src.spatial import from_geojson_to_ewkt
+from src.spatial import spatial
 
 
 class Xco2:
@@ -14,23 +13,29 @@ class Xco2:
 
     Use only POST method.
     """
-    allowed = ('polygon', 'point' )
+    allowed = ('polygon', 'point', )
 
     def on_post(self, req, resp):
         """Handles POST requests"""
         resp.status = falcon.HTTP_200
         # grab 'geojson' from req.context
         data = req.context['geojson']
-        # get coordinates
-        coords = get_coordinates_from_geojson(data)
-        # shape the geojson into a EWKT
-        polygon = from_geojson_to_ewkt(coords)
-        # pass the EWKT to Controller
-        controller = Controller(polygon)
-        # perform querying
-        print(repr(controller))
+        # get coordinates from geojson
+        coords = spatial.from_list_to_ewkt(
+            spatial.coordinates_from_geojson(data)
+        )
+        print(coords)
+        # create the controller view
+        controller = Controller(coords)
+        # find the areas contained by controller's view and connected points' data
+        controller.which_areas_contains_this_polygon()
+        # dump the retrieved data
+        json = controller.serialize_features_from_database()
 
-        #req.context['result'] = str([r for r in results])
+        print(str(controller))
+        print(json)
+
+        req.context['result'] = json
 
 
 class Hello:
@@ -75,7 +80,7 @@ class AuthMiddleware:
 
             if not _token_is_valid(token, project):
                 description = ('The provided auth token is not valid. '
-                               'Please request a new token and try again.')
+                               'Please provide a new token and try again.')
 
                 raise falcon.HTTPUnauthorized('Authentication required',
                                               description,
