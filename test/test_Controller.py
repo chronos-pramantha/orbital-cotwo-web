@@ -20,7 +20,7 @@ class TestController(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print(cls.__doc__)
-        _, cls.engine = start_postgre_engine('gis', False)
+        _, cls.engine = start_postgre_engine('test', False)
         cls.conn = cls.engine.connect()
 
     def setUp(self):
@@ -34,13 +34,14 @@ class TestController(unittest.TestCase):
         # simulate a single view/area
         self.polygon_avg = spatial.from_list_to_ewkt(geojson['geometry']['coordinates'])
         # simulate a view with 3 areas
-        self.polygon_big = spatial.from_list_to_ewkt(rand_polygon(size=4.2))
+        p = (-14, -68)  # rand_coordinates()
+        self.polygon_big, _ = spatial.shape_aoi(p, size=8)  # spatial.from_list_to_ewkt(rand_polygon(size=12))
         # simulate a random point
-        p = rand_coordinates()
+
         self.point = spatial.shape_geometry(p[0], p[1])
 
     @unittest.skipIf(REFACTOR, 'Refactoring')
-    def test_shold_initialize_controller(self):
+    def test_should_initialize_controller(self):
         print('TEST1')
         controller = Controller(self.polygon_avg)
         try:
@@ -91,12 +92,26 @@ class TestController(unittest.TestCase):
         controller = Controller(self.polygon_big)
         print(controller.pks)
 
-    #@unittest.skipIf(REFACTOR, 'Refactoring')
+    @unittest.skipIf(REFACTOR, 'Refactoring')
     def test_should_find_closest_centers(self):
         print('TEST4')
         controller = Controller(self.point)
         closest = controller.what_are_the_closest_centers_to_(controller.geometry)
         print(closest)
+
+    #@unittest.skipIf(REFACTOR, 'Refactoring')
+    def test_should_return_all_the_xco2_in_a_geometry(self):
+        # create a controller
+        controller = Controller(self.polygon_big)
+        #print(self.polygon_big)
+        # find the areas contained by controller's view
+        controller.which_areas_contains_this_polygon()
+        # return the JSON points contained by the areas
+        #print(areas)
+        json = controller.serialize_features_from_database()
+
+        print(json)
+
 
     def tearDown(self):
         del self

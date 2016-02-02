@@ -13,7 +13,7 @@ __author__ = 'Lorenzo'
 
 def _request(url, data=None):
     """
-    Build the Request object to send to JSON-RPC API.
+    Build the Request object to send.
 
     :param str url: complete endpoint
     :param dict data: data for the POST body
