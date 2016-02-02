@@ -4,9 +4,9 @@ Thia module contains a class that is the main class of the server
  and a class that manage all the operations on the t_areas table.
  The t_areas table is the one required to serve the client.
 """
+import json
 from collections import namedtuple
 from sqlalchemy import select, func
-import json
 from pygeoif import from_wkt, Point, Polygon
 
 __author__ = 'Lorenzo'
@@ -27,13 +27,22 @@ class Controller:
     elements = ('POINT', 'POLYGON', )
 
     def __init__(self, geometry):
-        if any(geometry.find(e) != -1 for e in self.elements):
-            self.element = [e for e in self.elements if geometry.find(e) != -1][0]
-        else:
-            raise ValueError('Controller: geometry has to be '
-                             'a EWKT POINT or POLYGON')
+        try:
+            if any(geometry.find(e) != -1 for e in self.elements):
+                self.element = [e for e in self.elements if geometry.find(e) != -1][0]
+            else:
+                raise ValueError('Controller: geometry has to be '
+                                 'a EWKT POINT or POLYGON')
+        except Exception as e:
+            raise ValueError('The value passed at Controller is not in the right format: {}'.format(
+                    str(e)
+                )
+            )
         self.geometry = geometry                   # EWKT string
         self.geo_object = from_wkt(self.geometry)  # pygeoif object
+        # #todo: implement descriptors
+        self.results_proxy = None                  # variable to store the resulting areas
+        self.geojson = None                        # variable to store the resulting geojson
 
     def __str__(self):
         return 'Controller View for {element!s} at coordinates {coords!r}'.format(
@@ -172,8 +181,8 @@ class Controller:
         """
         query = select([Areas]).where(func.ST_Contains(self.geometry, Areas.aoi))
         print(str(query.compile()))
-        results = areasOps.exec_func_query(query, multi=True)
-        return results
+        self.results_proxy = areasOps.exec_func_query(query, multi=True)
+        return self.results_proxy
 
     def which_points_contains_this_area(self):
         """
@@ -184,6 +193,23 @@ class Controller:
         print(str(query.compile()))
         results = areasOps.exec_func_query(query, multi=True)
         return results
+
+    def serialize_features_from_database(self):
+        """
+        Dump the features retrieved from the database into a GeoJSON
+        :return str:
+        """
+        geojson = {
+            "data_source": "NASA Orbital Carbon Observatory",
+            "jpl_url": "http://oco.jpl.nasa.gov",
+            "developed_by": "Pramantha Ltd",
+            "pramantha_url": "http://pramantha.net",
+            "features": []
+        }
+        for d in self.results_proxy:
+            for f in d.data["features"]:
+                geojson["features"].append(f)
+        return json.dumps(geojson)
 
 
 class areasOps(dbProxy):
