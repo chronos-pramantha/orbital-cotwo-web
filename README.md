@@ -41,6 +41,8 @@ $psql> \connect test
 $psql> CREATE EXTENSION postgis;
 ```
 
+* run `python src/xco2.py` to create database tables
+
 Check if everything is ok:
 ```
 $psql> \dt+ t_co2;
@@ -76,8 +78,7 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 
 ```
 
-* run `python src/xco2.py` to create database table
-* download files from NASA using the script in `files/` (you can use the Python script or `wget` with the txt file)
+* download files from NASA using the script in `files/` (you can use the Python script or `wget` with the txt file; you don't need to download them all, some of them are enough for a test)
 * run `main.py` to dump data from files to db
 * run `serve.py` to start the server
 * try `curl 127.0.0.1:5000`
