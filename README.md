@@ -90,7 +90,7 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 ```
 curl 127.0.0.1:5000/co2/by/polygon -H 'X-Auth-Token: abc' -H 'Content-Type: application/json' -d '{"geometry": {"type": "Polygon", "coordinates": [ [[-18.0, -64.0], [-10.0, -64.0],[-10.0, -72.0], [-18.0, -72.0],[-18.0, -64.0]]]}}'
 ```
-It should return all the points contained in the given geometry (chooose a geometry that actually grab some data from your test sample).
+It should return all the points contained in the given geometry (choose a geometry that actually grab some data from your test sample, or you will have a void response).
 
 ## Status
 * Refactoring to PostGRE/PostGIS support [DONE]
@@ -101,11 +101,11 @@ It should return all the points contained in the given geometry (chooose a geome
 * The server accepts POST request at `/co2/by/polygon`. It needs a GeoJSON to be passed in the request's body [DONE] 
 
 ## To-do
-* [PostGRE-PostGIS](http://postgis.net/) support
+* [PostGRE-PostGIS](http://postgis.net/) support [DONE]
 * Write more test queries
-* Implement a caching/lookup/aggregation table for the main table
-* Design the REST interface
-* Set up the Web server
+* Implement a caching/lookup/aggregation table for the main table [DONE]
+* Design a basic REST interface [DONE]
+* Set up a basic Web server [DONE]
 
 ## Wiki
 see the `WIKI.md` file
