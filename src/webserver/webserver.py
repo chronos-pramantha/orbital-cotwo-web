@@ -103,6 +103,7 @@ class RequireJSON(object):
                     href='http://docs.examples.com/api/json')
 
 
+
 class JSONTranslator:
     """Middleware to pre-process request's body and check if JSON is valid"""
     def process_request(self, req, resp):
@@ -112,7 +113,10 @@ class JSONTranslator:
         # See also: PEP 3333
         if req.content_length in (None, 0):
             # Request body is void, nothing to do
-            return
+            raise falcon.HTTPBadRequest(
+                'Empty request body',
+                'A valid GeoJSON document is required.'
+            )
 
         body = req.stream.read()
         if not body:
@@ -129,6 +133,7 @@ class JSONTranslator:
                                    'Could not decode the request body. The '
                                    'JSON was incorrect or not encoded as '
                                    'UTF-8.')
+
 
     def process_response(self, req, resp, resource):
         if 'result' not in req.context:
