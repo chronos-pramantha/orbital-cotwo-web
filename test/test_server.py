@@ -49,6 +49,8 @@ class ServerTest(unittest.TestCase):
 
         req = _request(url, data)
         resp = _response(req)
+        # equivalent to:
+        # curl 127.0.0.1:5000/co2/by/polygon -H 'X-Auth-Token: abc' -H 'Content-Type: application/json' -d '{"geometry": {"type": "Polygon", "coordinates": [ [[-18.0, -64.0], [-10.0, -64.0],[-10.0, -72.0], [-18.0, -72.0],[-18.0, -64.0]]]}}'
         print(resp[1])
 
         self.assertTrue(resp[0] == 200)
