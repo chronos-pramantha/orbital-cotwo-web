@@ -84,7 +84,13 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 * try `curl 127.0.0.1:5000`
 
 ## Run tests
-* `python3 test/run_test.py` to test functionality (it uses the `test` database)
+* `python3 test/run_test.py` to run the full suite (it uses the `test` database)
+* `python3 test/test_integration1_initialize.py` to test basic operations (it uses the `test` database)
+* You can use: 
+```
+curl 127.0.0.1:5000/co2/by/polygon -H 'X-Auth-Token: abc' -H 'Content-Type: application/json' -d '{"geometry": {"type": "Polygon", "coordinates": [ [[-18.0, -64.0], [-10.0, -64.0],[-10.0, -72.0], [-18.0, -72.0],[-18.0, -64.0]]]}}'
+```
+It should return all the points contained in the given geometry (chooose a geometry that actually grab some data from your test sample).
 
 ## Status
 * Refactoring to PostGRE/PostGIS support [DONE]
@@ -92,7 +98,7 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 * BUG in storing method [FIXED]
 * Create a class for db operations [DONE]
 * Starting querying tests [DONE]
-* *TO BE IMPLEMENTED*: The server accepts POST request at `/oco2/by/area`. It needs a GeoJSON to be passed in the request's body.
+* The server accepts POST request at `/co2/by/polygon`. It needs a GeoJSON to be passed in the request's body [DONE] 
 
 ## To-do
 * [PostGRE-PostGIS](http://postgis.net/) support
