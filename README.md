@@ -4,7 +4,7 @@ This **Python** micro-service provides Web-based map clients with **geolocated W
 Data published by *NASA/JPL's Orbital Carbon Observatory*  mission can be then easily edited into a map for Web-browsers using popular map providers' API.
 This tool can be modified to serve any kind of geolocated data from a Highly Distributed Filesystem source with great performance, for further information contact the author.
 
-Developed by [Pramantha](https://angel.co/pramantha)
+Developed for [Pramantha](https://angel.co/pramantha)
 
 ## License
 See LICENSE
