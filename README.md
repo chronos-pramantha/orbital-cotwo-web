@@ -2,7 +2,7 @@
 
 This micro-service provides map clients with **geolocated Web-compliant data**. 
 Data published by *NASA/JPL's Orbital Carbon Observatory*  mission can be then easily edited into a map for Web-browsers using popular map providers' API.
-This tool can be modified to serve any kind of geolocated data from an Highly Distributed Filesystem source, for further information contact the author.
+This tool can be modified to serve any kind of geolocated data from an Highly Distributed Filesystem source with great performance, for further information contact the author.
 
 ## License
 See LICENSE
@@ -94,7 +94,7 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 
 ## Dump the data and run the code
 
-* download files from NASA using the script in `files/` (you can use the Python script or `wget` with the txt file; you don't need to download them all, some of them are enough for a test)
+* download files from NASA using the script in `files/` (you can use the Python script or `wget` with the txt file; you don't need to download them all, some of them are enough for a test, full repository is actually 17Gb)
 * run `main.py` to dump data from files to db
 * run `serve.py` to start the server
 * try `curl 127.0.0.1:5000`
@@ -109,12 +109,12 @@ curl 127.0.0.1:5000/co2/by/polygon -H 'X-Auth-Token: abc' -H 'Content-Type: appl
 It should return all the points contained in the given geometry (choose a geometry that actually grab some data from your test sample, or you will have a void response).
 
 ## Status
-* Refactoring to PostGRE/PostGIS support [DONE]
-* Dump of data procedure complete [DONE]
-* BUG in storing method [FIXED]
-* Create a class for db operations [DONE]
-* Starting querying tests [DONE]
-* The server accepts POST request at `/co2/by/polygon`. It needs a GeoJSON to be passed in the request's body [DONE] 
+* <s>Refactoring to PostGRE/PostGIS support</s> [DONE]
+* <s>Dump of data procedure complete</s> [DONE]
+* <s>BUG in storing method</s> [FIXED]
+* <s>Create a class for db operations</s> [DONE]
+* <s>Starting querying tests</s> [DONE]
+* <s>The server accepts POST request at `/co2/by/polygon`. It needs a GeoJSON to be passed in the request's body (see 'Run Tests')</s> [DONE] 
 
 ## To-do
 * <s>[PostGIS](http://postgis.net/) support</s>
@@ -124,7 +124,8 @@ It should return all the points contained in the given geometry (choose a geomet
 * <s>Set up a basic Web server</s>
 
 ## Wiki
-see the `WIKI.md` file
+* see the `WIKI.md` file
+* use Issues for questions and feedback (:
 
 ## Notes 
 * Developed on Python 3.5.1 and Postgre 9.3, on Ubuntu Trusty Tahr 64bit
