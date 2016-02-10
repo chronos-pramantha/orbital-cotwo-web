@@ -1,6 +1,20 @@
-# A Web interface for OCO2 data
+# A Web micro-service for OCO2 data
 
-## Run the code
+This micro-service provides map clients with **geolocated Web-compliant data**. 
+Data published by *NASA/JPL's Orbital Carbon Observatory*  mission can be then easily edited into a map for Web-browsers using popular map providers' API.
+This tool can be modified to serve any kind of geolocated data from an Highly Distributed Filesystem source, for further information contact the author.
+
+## License
+See LICENSE
+
+All rights on the data are in the property of the Owner.
+
+## Data pipeline
+This micro-service implements a **data pipeline** from highly distributed file system (HDF5) to SQL/GIS database, serving results from geoqueries into GeoJSON format using Falcon high-perfomance Web server.
+It implements a simple algorithm to have fast access to the totality of Earth's surface (using projection 3857).
+This is a beta version, the most advanced features are not yet fully implemented.
+
+## Install the database and server (Linux Ubuntu or Debian)
 * install `requirements.txt` (Python 3.4+ required)
 * install PostgreSQL and PostGIS extension. In Ubuntu:  
 ```
@@ -78,14 +92,16 @@ $psql> SELECT * FROM information_schema.table_constraints WHERE table_name='t_co
 
 ```
 
+## Dump the data and run the code
+
 * download files from NASA using the script in `files/` (you can use the Python script or `wget` with the txt file; you don't need to download them all, some of them are enough for a test)
 * run `main.py` to dump data from files to db
 * run `serve.py` to start the server
 * try `curl 127.0.0.1:5000`
 
 ## Run tests
-* `python3 test/run_test.py` to run the full suite (it uses the `test` database)
-* `python3 test/test_integration1_initialize.py` to test basic operations (it uses the `test` database)
+* `python3 test/run_test.py` to run the full suite (it uses the `test` database). Unit tests to test general functionality of the code.
+* `python3 test/test_integration1_initialize.py` to test basic operations (it uses the `test` database). Some data is inserted and can be queried, follow the instructions printed on the screen
 * You can use: 
 ```
 curl 127.0.0.1:5000/co2/by/polygon -H 'X-Auth-Token: abc' -H 'Content-Type: application/json' -d '{"geometry": {"type": "Polygon", "coordinates": [ [[-18.0, -64.0], [-10.0, -64.0],[-10.0, -72.0], [-18.0, -72.0],[-18.0, -64.0]]]}}'
@@ -101,11 +117,11 @@ It should return all the points contained in the given geometry (choose a geomet
 * The server accepts POST request at `/co2/by/polygon`. It needs a GeoJSON to be passed in the request's body [DONE] 
 
 ## To-do
-* [PostGRE-PostGIS](http://postgis.net/) support [DONE]
-* Write more test queries
-* Implement a caching/lookup/aggregation table for the main table [DONE]
-* Design a basic REST interface [DONE]
-* Set up a basic Web server [DONE]
+* <s>[PostGIS](http://postgis.net/) support</s>
+* <s>Write more test queries</s>
+* <s>Implement a caching/lookup/aggregation table for the main table</s>
+* <s>Design a basic REST interface</s>
+* <s>Set up a basic Web server</s>
 
 ## Wiki
 see the `WIKI.md` file
