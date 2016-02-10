@@ -1,8 +1,8 @@
 # A micro-service example for publishing big-data
 
-This micro-service provides map clients with **geolocated Web-compliant data**. 
+This **Python** micro-service provides Web-based map clients with **geolocated Web-compliant data**. 
 Data published by *NASA/JPL's Orbital Carbon Observatory*  mission can be then easily edited into a map for Web-browsers using popular map providers' API.
-This tool can be modified to serve any kind of geolocated data from an Highly Distributed Filesystem source with great performance, for further information contact the author.
+This tool can be modified to serve any kind of geolocated data from a Highly Distributed Filesystem source with great performance, for further information contact the author.
 
 ## License
 See LICENSE
