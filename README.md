@@ -17,7 +17,7 @@ It implements a simple algorithm to have fast access to the totality of Earth's 
 This is a beta version, the most advanced features are not yet fully implemented.
 
 ## Install the database and server (Linux Ubuntu or Debian)
-* install `requirements.txt` (Python 3.4+ required)
+* `python3 -m pip install -r requirements.txt` to install the required Python packages (Python 3.4+ required)
 * install PostgreSQL and PostGIS extension. In Ubuntu:  
 ```
 # depending on you Python version you could need also 
@@ -55,9 +55,8 @@ $psql> CREATE EXTENSION postgis;
 
 $psql> \connect test
 $psql> CREATE EXTENSION postgis;
-```
-
-* run `python src/xco2.py` to create database tables
+``` 
+* `python3 src/xco2.py` to create database tables
 
 Check if everything is ok:
 ```
