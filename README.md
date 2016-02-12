@@ -132,3 +132,4 @@ It should return all the points contained in the given geometry (choose a geomet
 * Developed on Python 3.5.1 and Postgre 9.3, on Ubuntu Trusty Tahr 64bit
 * Python dependencies require different packages to be installed via `apt-get` in your Linux system (for example `netcdf4` requires `libhdf5-serial-dev`, `netcdf-bin`
    and `libnetcdf-dev`; `psycopg2` may need `pglib-dev`; etc.)
+* To fix the `ValueError: did not find HDF5 headers`: NetCDF4 package needs this dependencies on Ubuntu: `libhdf5-serial-dev`, `netcdf-bin`, `libnetcdf-dev` (see https://github.com/Unidata/netcdf4-python/issues/305)
